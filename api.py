@@ -198,6 +198,16 @@ async def grade_challenge(data: dict, user = Depends(get_current_user)):
 async def get_leaderboard(limit: int = 10):
     return database.get_leaderboard(limit)
 
+@app.get("/api/languages")
+async def get_languages():
+    try:
+        from deep_translator import GoogleTranslator
+        langs = GoogleTranslator().get_supported_languages()
+        # Return as title case for better UI
+        return [l.title() for l in langs]
+    except Exception as e:
+        return ["Spanish", "French", "Japanese", "German", "Italian", "Korean", "Chinese", "Russian"]
+
 if __name__ == "__main__":
     import uvicorn
     # Hugging Face uses port 7860 by default

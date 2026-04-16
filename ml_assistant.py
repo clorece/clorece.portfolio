@@ -54,9 +54,21 @@ def load_local_datasets():
 # Automatically load the text files upon starting the bot
 load_local_datasets()
 
+# Initialize RandomWords for nearly infinite word variety
+_rw = RandomWords()
+
 def get_random_english_word(category: str = "Word") -> str:
     if category.lower() == "sentence":
         return random.choice(COMMON_SENTENCES)
+    
+    # Attempt to get a truly random word using the library
+    try:
+        # Get a word between 5-10 characters for good difficulty
+        word = _rw.get_random_word(minLength=5, maxLength=10)
+        if word: return word
+    except:
+        pass
+        
     return random.choice(COMMON_WORDS)
 
 def is_language_supported(lang: str) -> bool:

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search } from 'lucide-react'
 
 // --- Components ---
 
@@ -98,7 +98,20 @@ const LangyPage = () => {
   const [isInverse, setIsInverse] = useState(false)
   const [dbError, setDbError] = useState(false)
   const [timeLeft, setTimeLeft] = useState('')
+  const [languages, setLanguages] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:10000/api"
+
+  useEffect(() => {
+    fetchLanguages()
+  }, [])
+
+  const fetchLanguages = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/languages`)
+      if (res.ok) setLanguages(await res.json())
+    } catch (e) { console.error(e) }
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -296,18 +309,33 @@ const LangyPage = () => {
                 </div>
               </div>
 
-              <div className="space-y-3 mb-10">
-                <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">3. Language Selection</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {['Spanish', 'French', 'Japanese', 'German', 'Italian', 'Korean', 'Chinese', 'Russian'].map(lang => (
-                    <button 
-                      key={lang}
-                      onClick={() => setSelectedLanguage(lang)}
-                      className={`border p-3 rounded-xl font-semibold text-sm transition-all focus:ring-2 focus:ring-emerald-500 outline-none ${selectedLanguage === lang ? 'bg-emerald-600 border-emerald-500' : 'bg-slate-900 border-slate-700 hover:bg-slate-800'}`}
-                    >
-                      {lang}
-                    </button>
-                  ))}
+              <div className="space-y-4 mb-10">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">3. Language Selection</p>
+                  <div className="relative group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-400 transition-colors" size={14} />
+                    <input 
+                      type="text"
+                      placeholder="Search languages..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none w-48 transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar bg-slate-900/30 p-4 rounded-2xl border border-slate-800">
+                  {languages
+                    .filter(lang => lang.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map(lang => (
+                      <button 
+                        key={lang}
+                        onClick={() => setSelectedLanguage(lang)}
+                        className={`border p-3 rounded-xl font-semibold text-xs transition-all focus:ring-2 focus:ring-emerald-500 outline-none truncate ${selectedLanguage === lang ? 'bg-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-400'}`}
+                        title={lang}
+                      >
+                        {lang}
+                      </button>
+                    ))}
                 </div>
               </div>
 
