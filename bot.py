@@ -74,9 +74,8 @@ async def help_cmd(interaction: discord.Interaction):
 
 @bot.tree.command(name="language", description="Shows supported languages")
 async def language_cmd(interaction: discord.Interaction):
-    from deep_translator import GoogleTranslator
-    langs = GoogleTranslator().get_supported_languages()
-    lang_str = ", ".join([lang.title() for lang in langs])
+    langs = sorted([l.capitalize() for l in ml_assistant.SUPPORTED_LANGUAGES])
+    lang_str = ", ".join(langs)
     
     if len(lang_str) > 4000:
         lang_str = lang_str[:4000] + "..."
@@ -147,7 +146,7 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
         category = view.choice
     
         # Generate Challenge
-        english_word, translated_word = ml_assistant.generate_challenge(language, word, category)
+        english_word, translated_word = await ml_assistant.generate_challenge(language, word, category)
         
         if english_word == "error":
             err = translated_word[:150] + "..." if len(translated_word) > 150 else translated_word
@@ -179,7 +178,7 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
         user_answer = msg.content
         
         async with interaction.channel.typing():
-            is_correct, score, reason = ml_assistant.process_user_input_and_grade(language, english_word, user_answer)
+            is_correct, score, reason = await ml_assistant.process_user_input_and_grade(language, english_word, user_answer)
         
         if is_correct:
             if is_daily:

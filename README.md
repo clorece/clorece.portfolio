@@ -35,18 +35,22 @@ I focus on developing applications that solve real-world problems through a comb
 ### The Hybrid Accuracy Engine
 Most language bots fail if you have a single typo or use a synonym. Langy solves this with a modular, 3-tier scoring system:
 
-1.  **Semantic Analysis (60%):** Uses vector embeddings (`all-MiniLM-L6-v2`) to compare the "intent" of your translation.
-2.  **Lexical Analysis (20%):** Handles typos and spelling variations using string similarity.
-3.  **Linguistic Hierarchy (20%):** Leverages **WordNet** to identify synonyms and categorical relationships (e.g., recognizing that "puppy" is a specific type of "dog").
+1.  **Expert Dictionary Layer (NEW):** Before scoring, Langy consults authoritative dictionaries (Jisho, CEDICT, Wiktionary) to verify word existence and award "Confidence Bonuses."
+2.  **Semantic Analysis (60%):** Uses vector embeddings (`all-MiniLM-L6-v2`) to compare the "intent" of your translation.
+3.  **Linguistic Hierarchy (40%):** Leverages **WordNet** and specialized language tools to identify synonyms and categorical relationships.
+
+### Expert Language Support
+Langy currently supports **20 top-studied languages**, each with dedicated expert tool verification:
+
+| Category | Languages | Expert Sources |
+| :--- | :--- | :--- |
+| **Asian** | Japanese, Chinese, Korean, Hindi, Vietnamese, Indonesian | Jisho, CEDICT, Wiki |
+| **European** | Spanish, French, German, Italian, Portuguese, Dutch, Polish, Swedish, Greek, Czech, Russian | RAE, Larousse, Wiki |
+| **Middle Eastern** | Arabic, Turkish, Hebrew | Wiki / Almaany |
 
 ### Dual-Platform Synergy
 - **Discord Bot:** Learn where you hang out. Get daily challenges, track streaks, and compete on a global leaderboard directly in Discord.
-- **Web Interface:** A modern, glassmorphic web app that syncs with your Discord account for a seamless learning experience across devices.
-
-### Privacy & Security
-- **Identity-Only Auth:** We only request the `identify` scope via Discord - no access to emails or private messages.
-- **Secure Persistence:** Powered by Supabase with Row Level Security and JWT-based session management.
-- **Full Transparency:** Every data point collected (ID, username, avatar, points) is used solely for the game and the public leaderboard.
+- **Web Interface:** A modern app that syncs with Discord for a seamless learning experience across devices.
 
 ---
 

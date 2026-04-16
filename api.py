@@ -78,13 +78,9 @@ async def background_initialization():
         
     try:
         # 3. Pre-load ML model
-        print("[ML] Pre-loading Similarity/MT models in background...")
-        # Load Similarity (MiniLM)
+        print("[ML] Pre-loading ML model in background...")
         ml_assistant.get_model()
-        # Load Local MT (NLLB)
-        import nllb_engine
-        nllb_engine.pre_load()
-        print("[SUCCESS] All ML models loaded in background.")
+        print("[SUCCESS] ML model loaded in background.")
     except Exception as e:
         print(f"[ERROR] Model background init error: {e}")
 
@@ -198,7 +194,7 @@ async def get_stats(user = Depends(get_current_user)):
 
 @app.get("/api/challenge")
 async def get_challenge(language: str, category: str = "Word", word: Optional[str] = None):
-    english_word, translated_word = ml_assistant.generate_challenge(language, word, category)
+    english_word, translated_word = await ml_assistant.generate_challenge(language, word, category)
     if english_word == "error":
         raise HTTPException(status_code=400, detail=translated_word)
     
@@ -218,7 +214,7 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
     category = data.get("category", "Word")
     is_inverse = data.get("is_inverse", False)
 
-    is_correct, score, reason = ml_assistant.process_user_input_and_grade(language, original_english, user_input, category)
+    is_correct, score, reason = await ml_assistant.process_user_input_and_grade(language, original_english, user_input, category)
     
     result = {
         "is_correct": is_correct,
