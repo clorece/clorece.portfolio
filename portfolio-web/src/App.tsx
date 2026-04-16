@@ -692,7 +692,10 @@ const Footer = () => {
     fetch(`${API_BASE}/config`)
       .then(res => res.json())
       .then(data => setClientId(data.clientId))
-      .catch(err => console.error("Config fetch error:", err));
+      .catch(err => {
+        console.error("Config fetch error:", err);
+        // Fallback or silent fail handled by UI
+      });
   }, []);
 
   const inviteUrl = clientId 
@@ -700,37 +703,56 @@ const Footer = () => {
     : "#";
 
   return (
-    <footer className="relative z-10 mt-20 py-16 px-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl">
+    <footer id="global-footer" className="relative z-50 mt-auto py-20 px-6 border-t border-slate-800 bg-slate-900/95 backdrop-blur-2xl">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 text-center md:text-left">
-        <div>
-          <h3 className="text-3xl font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-            Level up your community.
+        <div className="space-y-2">
+          <h3 className="text-4xl font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">
+            Ready to learn together?
           </h3>
-          <p className="text-slate-400 mt-3 text-lg max-w-md">
-            Bring Langy to your Discord server and start practicing with your friends today!
+          <p className="text-slate-400 text-lg max-w-md">
+            Invite Langy to your Discord server and master new languages with your friends.
           </p>
         </div>
-        <motion.a
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          href={inviteUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 px-10 py-5 rounded-3xl font-black text-white shadow-2xl shadow-indigo-500/40 transition-all border border-indigo-400/20 ${!clientId ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Bot size={24} />
-          {clientId ? "Add to Discord" : "Loading..."}
-          <ExternalLink size={16} className="opacity-50" />
-        </motion.a>
+        
+        <div className="flex flex-col items-center md:items-end gap-4">
+          <motion.a
+            whileHover={{ scale: 1.05, y: -4 }}
+            whileTap={{ scale: 0.95 }}
+            href={inviteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`group relative flex items-center gap-4 bg-gradient-to-br from-indigo-600 to-blue-700 hover:from-indigo-500 hover:to-blue-600 px-12 py-6 rounded-[2rem] font-black text-white shadow-2xl shadow-indigo-500/50 transition-all border border-white/10 ${!clientId ? 'opacity-70 grayscale' : ''}`}
+          >
+            <div className="absolute inset-0 bg-white/10 blur-xl rounded-full group-hover:bg-white/20 transition-all"></div>
+            <Bot size={28} className="relative z-10" />
+            <span className="relative z-10 text-xl tracking-tight">
+              {clientId ? "Add Langy to Discord" : "Searching for Server..."}
+            </span>
+            <ExternalLink size={18} className="relative z-10 opacity-50" />
+          </motion.a>
+          {clientId && (
+            <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+              Installs in 2 clicks • Zero config required
+            </p>
+          )}
+        </div>
       </div>
-      <div className="max-w-6xl mx-auto mt-16 pt-8 border-t border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-6">
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-          © {new Date().getFullYear()} Clorece Portfolio | Powered by Langy AI
-        </p>
-        <div className="flex gap-8">
-          <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors text-[10px] uppercase tracking-widest font-black">Privacy</a>
-          <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors text-[10px] uppercase tracking-widest font-black">Terms</a>
-          <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors text-[10px] uppercase tracking-widest font-black">Docs</a>
+
+      <div className="max-w-6xl mx-auto mt-20 pt-10 border-t border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="flex flex-col items-center md:items-start gap-2">
+          <p className="text-xs text-slate-200 font-black uppercase tracking-widest">
+            Clorece Portfolio | Langy Project
+          </p>
+          <p className="text-[10px] text-slate-600 font-bold tracking-[0.2em]">
+            MADE WITH INTENT • {new Date().getFullYear()}
+          </p>
+        </div>
+        <div className="flex gap-10">
+          <a href="#" className="text-slate-500 hover:text-indigo-400 transition-all text-xs uppercase tracking-widest font-black">Support</a>
+          <a href="#" className="text-slate-500 hover:text-indigo-400 transition-all text-xs uppercase tracking-widest font-black">Privacy</a>
+          <a href="https://github.com" className="text-slate-500 hover:text-indigo-400 transition-all text-xs uppercase tracking-widest font-black flex items-center gap-2">
+            <Github size={14} /> Open Source
+          </a>
         </div>
       </div>
     </footer>
@@ -740,12 +762,14 @@ const Footer = () => {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#0f172a] text-slate-200">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<><Hero /><Projects /></>} />
-          <Route path="/langy" element={<LangyPage />} />
-        </Routes>
+      <div className="min-h-screen flex flex-col bg-[#0f172a] text-slate-200">
+        <div className="flex-grow">
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<><Hero /><Projects /></>} />
+            <Route path="/langy" element={<LangyPage />} />
+          </Routes>
+        </div>
         <Footer />
       </div>
     </Router>
