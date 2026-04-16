@@ -21,6 +21,8 @@ def get_wordnet_relationship(original: str, user_input: str) -> tuple[float, str
     
     if not original or not user_input:
         return 0.0, ""
+        
+    try:
         orig_syns = wordnet.synsets(original)
         user_syns = wordnet.synsets(user_input)
         
