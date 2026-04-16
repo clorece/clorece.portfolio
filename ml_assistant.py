@@ -78,14 +78,18 @@ async def generate_challenge(language: str, word: str = None, category: str = "W
     except Exception as e:
         return "error", str(e)
 
-async def translate_text(text: str, source: str = 'auto', target: str = 'english') -> str:
-    try:
-        loop = asyncio.get_event_loop()
-        translator = GoogleTranslator(source=source, target=target)
-        result = await loop.run_in_executor(None, translator.translate, text)
-        return result.lower()
-    except Exception:
-        return text.lower()
+async def translate_text(text: str, source: str = 'auto', target: str = 'english', retries: int = 3) -> str:
+    for attempt in range(retries):
+        try:
+            loop = asyncio.get_event_loop()
+            translator = GoogleTranslator(source=source, target=target)
+            result = await loop.run_in_executor(None, translator.translate, text)
+            return result.lower()
+        except Exception:
+            if attempt < retries - 1:
+                await asyncio.sleep(0.5)
+            else:
+                return text.lower()
 
 def get_score_reason(original: str, user_input: str, semantic_score: float, lexical_score: float, wordnet_sim: float, wordnet_desc: str, tool_used: str = None, dictionary_found: bool = False) -> str:
     original = original.lower()
@@ -95,7 +99,10 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
     if tool_used and dictionary_found:
         prefix = f"✅ **Verified by {tool_used}**\n"
     
-    # 1. Basic Grammatical Checks (Singular/Plural)
+    # 1. Exact Match or Singular/Plural
+    if original == user_input:
+        return prefix + "Perfect! You nailed the translation exactly."
+
     if original == user_input + 's' or user_input == original + 's' or \
        original == user_input + 'es' or user_input == original + 'es' or \
        (original == "child" and user_input == "children") or \
@@ -106,56 +113,55 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
        (original == "women" and user_input == "woman"):
         return prefix + "Correct concept! You just used a different grammatical form (singular/plural)."
 
-    # 2. Check for High Confidence Matches
-    if semantic_score >= 0.96 and lexical_score >= 0.90:
-        return prefix + "Spot on! Perfect semantic and near-perfect spelling match."
+    # 2. Strong Semantic & Lexical Matches
+    if semantic_score >= 0.95 and lexical_score >= 0.85:
+        return prefix + "Excellent! That's a very accurate translation."
     
     if wordnet_sim >= 1.0:
-        return prefix + wordnet_desc
+        return prefix + (wordnet_desc if wordnet_desc else "Exactly right! Those words are perfect synonyms.")
 
-    # 3. Usage Gap Detection
-    if lexical_score >= 0.80 and semantic_score < 0.70:
-        return prefix + "You used the right words, but the overall meaning or usage as a phrase is different."
+    # 3. Meaning vs Spelling nuances
+    if semantic_score >= 0.85 and lexical_score < 0.50:
+        return prefix + "You definitely got the meaning right, even if the wording was a bit different than expected."
+        
+    if lexical_score >= 0.85 and semantic_score < 0.60:
+        return prefix + f"You're very close in spelling to **'{original}'**, but **'{user_input}'** actually carries a different meaning."
 
-    # 4. Handle Intermediate Scores
-    if wordnet_desc and wordnet_sim >= 0.60:
+    # 4. Dictionary-enhanced Feedback
+    if dictionary_found:
+        if semantic_score < 0.40:
+            return prefix + f"**'{user_input}'** is a real word, but it doesn't mean **'{original}'**. Check the dictionary definitions!"
+        return prefix + "The dictionary recognizes this word, and it's somewhat related, but it's not the standard translation here."
+
+    # 5. General Fallbacks
+    if wordnet_desc and wordnet_sim >= 0.50:
         return prefix + wordnet_desc
         
-    if lexical_score >= 0.85:
-        return prefix + f"Very close! Likely a minor typo: **'{user_input}'** vs **'{original}'**."
+    if semantic_score >= 0.70:
+        return prefix + "Pretty good! The meaning is quite close, even if it's not a perfect match."
         
-    if semantic_score >= 0.75:
-        if lexical_score < 0.60:
-            return prefix + "The meaning is there, but the wording is quite different from what we expected."
-        return prefix + "Close enough! The words share highly similar semantic meaning."
+    if semantic_score >= 0.40:
+        return prefix + "You're on the right track, but there's a more accurate way to translate this."
 
-    # 5. Dictionary Fallback
-    try:
-        from nltk.corpus import wordnet
-        orig_syn = wordnet.synsets(original)
-        user_syn = wordnet.synsets(user_input)
-        if orig_syn and user_syn:
-            orig_def = (orig_syn[0].definition()[:60] + '..') if len(orig_syn[0].definition()) > 60 else orig_syn[0].definition()
-            user_def = (user_syn[0].definition()[:60] + '..') if len(user_syn[0].definition()) > 60 else user_syn[0].definition()
-            
-            if semantic_score >= 0.45:
-                return prefix + f"Almost! But **'{user_input}'** usually refers to *'{user_def}'*, while **'{original}'** is *'{orig_def}'*."
-    except:
-        pass
+    return prefix + "That doesn't seem quite right. The meanings are fundamentally different."
 
-    if semantic_score >= 0.50:
-        return prefix + "The words are related in context, but the specific intention or phrasing is off."
-    return prefix + "The words have fundamentally different semantic meanings."
-
-async def process_user_input_and_grade(language: str, original_english: str, user_input: str, category: str = "Word") -> tuple[bool, float, str]:
+async def process_user_input_and_grade(language: str, original_english: str, user_input: str, category: str = "Word", is_inverse: bool = False) -> tuple[bool, float, str]:
     """
     Advanced Grading Logic with Language-Specific Dictionary Bias.
+    Now includes Direct Synonym Matching for Inverse Mode.
     """
     # 1. Dictionary Verification (Expert Layer)
     tool = lt_registry.get_tool(language)
     dict_results = await tool.lookup_word(user_input, language=language)
     dict_found = dict_results.get("found", False)
     
+    # NEW: Direct Synonym Match for Inverse Mode
+    # If the user provides a word in the target language, check if the original English word is in its definitions.
+    if is_inverse and dict_found and "definitions" in dict_results:
+        definitions = [str(d).lower() for d in dict_results["definitions"]]
+        if original_english.lower() in definitions:
+            return True, 1.0, f"✅ Verified by {tool.get_tool_name(language=language)}: Excellent! That is a valid, exact translation."
+
     # 2. Translation (MT Layer)
     user_english_guess = await translate_text(user_input, source=language.lower())
         
