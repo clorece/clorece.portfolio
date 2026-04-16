@@ -61,6 +61,18 @@ async def startup_event():
     # Start the Discord bot as a background task
     print("Launching Discord bot...")
     asyncio.create_task(start_bot())
+    # Start the Database Keep-Alive task
+    asyncio.create_task(db_heartbeat())
+
+async def db_heartbeat():
+    """Pings the database every 24 hours to prevent Supabase from pausing."""
+    while True:
+        try:
+            database.get_leaderboard(1)
+            print("💓 Database heartbeat successful.")
+        except Exception as e:
+            print(f"💔 Heartbeat failed: {e}")
+        await asyncio.sleep(86400) # Wait 24 hours
 
 @app.get("/api/auth/login")
 async def login():
