@@ -104,9 +104,15 @@ const LangyPage = () => {
   const [timeLeft, setTimeLeft] = useState('')
   const [languages, setLanguages] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [clientId, setClientId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchLanguages()
+    // Fetch Discord Client ID for invite button
+    fetch(`${API_BASE}/config`)
+      .then(res => res.json())
+      .then(data => setClientId(data.clientId))
+      .catch(err => console.error("Config fetch error:", err));
   }, [])
 
   const fetchLanguages = async () => {
@@ -614,15 +620,21 @@ const LangyPage = () => {
           </div>
         </div>
         <div>
-          <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">About Me</h4>
-          <p className="text-slate-400 leading-relaxed mb-6">
-            I'm a developer passionate about building interactive, AI-driven experiences. Langy was built 
-            to showcase how modern technology can make language learning more intuitive. 
-            Feel free to check out my other projects or connect on GitHub!
+          <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">Add Langy to Your Server</h4>
+          <p className="text-slate-400 leading-relaxed mb-8">
+            Master new languages with your community! Add Langy to your Discord server for daily challenges, leaderboard tracking, and group learning.
           </p>
-          <a href="https://github.com" className="inline-flex items-center gap-2 text-blue-400 font-bold hover:text-blue-300 transition-colors">
-            <Github size={20} /> View more work
-          </a>
+          <motion.a 
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            href={clientId ? `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=2147483648&scope=bot%20applications.commands` : "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 px-10 py-5 rounded-2xl font-black text-white shadow-2xl shadow-indigo-500/30 transition-all border border-indigo-400/20 ${!clientId ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Bot size={24} />
+            {clientId ? 'Add Langy to Discord' : 'Loading Invite...'}
+          </motion.a>
         </div>
       </motion.div>
 
