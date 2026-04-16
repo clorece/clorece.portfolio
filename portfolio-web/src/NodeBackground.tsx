@@ -6,7 +6,7 @@ interface Node {
   vx: number;
   vy: number;
   z: number; // Depth for parallax
-  size: number;
+  baseSize: number;
 }
 
 const NodeBackground: React.FC = () => {
@@ -15,19 +15,24 @@ const NodeBackground: React.FC = () => {
   const nodesRef = useRef<Node[]>([]);
   const requestRef = useRef<number>();
 
-  const RADIUS = 300; // Increased visibility radius around mouse
+  const RADIUS = 350; // Visibility radius around mouse
+  const BASE_OPACITY = 0.15;
+  const ENHANCED_OPACITY = 0.6;
+  const BASE_LINE_WIDTH = 0.8;
+  const ENHANCED_LINE_WIDTH = 2.2;
+  const MAX_CONNECT_DISTANCE = 300; // Increased to allow long-distance connectivity
 
   const initNodes = (width: number, height: number) => {
     const nodes: Node[] = [];
-    const count = 250; // Increased count for higher density
+    const count = 180; // Slightly reduced for better performance with N-NN approach
     for (let i = 0; i < count; i++) {
       nodes.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15,
         z: Math.random() * 2 + 1,
-        size: Math.random() * 2.5 + 2, // Thicker dots
+        baseSize: Math.random() * 1.5 + 1.2,
       });
     }
     nodesRef.current = nodes;
@@ -37,86 +42,94 @@ const NodeBackground: React.FC = () => {
     const { width, height } = ctx;
     context.clearRect(0, 0, width, height);
 
-    // Get colors from CSS variables
     const nodeColorRaw = getComputedStyle(document.documentElement).getPropertyValue('--node-color').trim();
     const lineColorRaw = getComputedStyle(document.documentElement).getPropertyValue('--line-color').trim();
 
     const nodes = nodesRef.current;
     const mouse = mouseRef.current;
 
-    for (let i = 0; i < nodes.length; i++) {
-      const n = nodes[i];
-      
-      // Calculate parallax based on mouse
+    // First, update all node positions and calculate render coordinates
+    const renderedNodes = nodes.map(n => {
+      n.x += n.vx;
+      n.y += n.vy;
+
+      if (n.x < 0) n.x = width;
+      if (n.x > width) n.x = 0;
+      if (n.y < 0) n.y = height;
+      if (n.y > height) n.y = 0;
+
       const parallaxX = (mouse.x - width / 2) * (n.z * 0.012);
       const parallaxY = (mouse.y - height / 2) * (n.z * 0.012);
 
-      const renderX = (n.x + parallaxX + width) % width;
-      const renderY = (n.y + parallaxY + height) % height;
+      return {
+        rx: (n.x + parallaxX + width) % width,
+        ry: (n.y + parallaxY + height) % height,
+        n: n
+      };
+    });
 
-      // Distance to mouse for radius effect
-      const dxMouse = renderX - mouse.x;
-      const dyMouse = renderY - mouse.y;
+    // Draw nodes and their connections
+    for (let i = 0; i < renderedNodes.length; i++) {
+      const nodeI = renderedNodes[i];
+      const dxMouse = nodeI.rx - mouse.x;
+      const dyMouse = nodeI.ry - mouse.y;
       const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+      const factor = Math.max(0, 1 - distMouse / RADIUS);
+      
+      const opacity = BASE_OPACITY + (ENHANCED_OPACITY - BASE_OPACITY) * factor;
+      const size = nodeI.n.baseSize * (1 + factor);
 
-      // Visibility factor based on radius
-      let visibility = 0;
-      if (distMouse < RADIUS) {
-        visibility = 1 - (distMouse / RADIUS);
+      context.globalAlpha = opacity;
+      context.fillStyle = nodeColorRaw;
+      context.beginPath();
+      context.arc(nodeI.rx, nodeI.ry, size, 0, Math.PI * 2);
+      context.fill();
+
+      // "All nodes connected" logic:
+      // Find the nearest neighbors for each node to ensure no isolated groups.
+      // We'll calculate distances to all other nodes and take the top 3 nearest.
+      const distances = [];
+      for (let j = 0; j < renderedNodes.length; j++) {
+        if (i === j) continue;
+        const nodeJ = renderedNodes[j];
+        const dx = nodeI.rx - nodeJ.rx;
+        const dy = nodeI.ry - nodeJ.ry;
+        const dist = dx * dx + dy * dy; // Squared distance for performance
+        distances.push({ index: j, dist: dist });
       }
 
-      if (visibility > 0) {
-        // Update base coordinates for drift
-        n.x += n.vx;
-        n.y += n.vy;
+      // Sort by distance and take nearest 3
+      distances.sort((a, b) => a.dist - b.dist);
+      const nearest = distances.slice(0, 3);
 
-        // Draw node with fading
-        context.globalAlpha = visibility;
-        context.fillStyle = nodeColorRaw;
-        context.beginPath();
-        context.arc(renderX, renderY, n.size, 0, Math.PI * 2);
-        context.fill();
+      for (const neighbor of nearest) {
+        // Optimization: Only draw if i < neighbor.index to avoid double drawing
+        if (i > neighbor.index) continue;
 
-        // Draw lines (trees) to nearby visible nodes
-        for (let j = i + 1; j < nodes.length; j++) {
-          const m = nodes[j];
-          const mParallaxX = (mouse.x - width / 2) * (m.z * 0.012);
-          const mParallaxY = (mouse.y - height / 2) * (m.z * 0.012);
-          const mRenderX = (m.x + mParallaxX + width) % width;
-          const mRenderY = (m.y + mParallaxY + height) % height;
+        const nodeJ = renderedNodes[neighbor.index];
+        const distActual = Math.sqrt(neighbor.dist);
+        
+        if (distActual < MAX_CONNECT_DISTANCE) {
+          const mDxMouse = nodeJ.rx - mouse.x;
+          const mDyMouse = nodeJ.ry - mouse.y;
+          const mDistMouse = Math.sqrt(mDxMouse * mDxMouse + mDyMouse * mDyMouse);
+          
+          const mFactor = Math.max(0, 1 - mDistMouse / RADIUS);
+          const avgFactor = (factor + mFactor) / 2;
+          
+          const lineOpacity = (BASE_OPACITY * 0.4) + (ENHANCED_OPACITY * 0.5 - BASE_OPACITY * 0.4) * avgFactor;
+          const lineWidth = BASE_LINE_WIDTH + (ENHANCED_LINE_WIDTH - BASE_LINE_WIDTH) * avgFactor;
 
-          const dx = renderX - mRenderX;
-          const dy = renderY - mRenderY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          // Only draw connection if both nodes are somewhat near mouse and each other
-          if (distance < 150) {
-            const mDxMouse = mRenderX - mouse.x;
-            const mDyMouse = mRenderY - mouse.y;
-            const mDistMouse = Math.sqrt(mDxMouse * mDxMouse + mDyMouse * mDyMouse);
-            
-            let mVisibility = 0;
-            if (mDistMouse < RADIUS) {
-              mVisibility = 1 - (mDistMouse / RADIUS);
-            }
-
-            const combinedVisibility = Math.min(visibility, mVisibility) * (1 - distance / 150);
-            
-            if (combinedVisibility > 0) {
-              context.globalAlpha = combinedVisibility;
-              context.strokeStyle = lineColorRaw;
-              context.lineWidth = 2; // Thicker lines
-              context.beginPath();
-              context.moveTo(renderX, renderY);
-              context.lineTo(mRenderX, mRenderY);
-              context.stroke();
-            }
-          }
+          // Fade line out as it reaches the MAX_CONNECT_DISTANCE
+          const distanceFade = 1 - (distActual / MAX_CONNECT_DISTANCE);
+          context.globalAlpha = lineOpacity * distanceFade;
+          context.strokeStyle = lineColorRaw;
+          context.lineWidth = lineWidth;
+          context.beginPath();
+          context.moveTo(nodeI.rx, nodeI.ry);
+          context.lineTo(nodeJ.rx, nodeJ.ry);
+          context.stroke();
         }
-      } else {
-         // Still update drift even if invisible
-         n.x += n.vx;
-         n.y += n.vy;
       }
     }
     context.globalAlpha = 1.0;
@@ -156,7 +169,7 @@ const NodeBackground: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 z-0 pointer-events-none"
+      className="fixed inset-0 -z-10 pointer-events-none"
     />
   );
 };
