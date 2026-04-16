@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Languages, Trophy, Zap, Globe, Github, LogIn, Send, Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
 
 // --- Components ---
 
@@ -166,6 +166,12 @@ const LangyPage = () => {
     } catch (e) { console.error(e) }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('langy_token')
+    setToken(null)
+    setUser(null)
+  }
+
   const startChallenge = async (type: 'practice' | 'daily') => {
     if (!selectedLanguage) {
       alert("Please choose a language before starting the challenge!");
@@ -233,7 +239,7 @@ const LangyPage = () => {
               <p className="text-sm text-slate-400">Level: Language Learner</p>
             </div>
           </div>
-          <div className="flex gap-8">
+          <div className="flex gap-8 items-center">
             <div className="text-center">
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Points</p>
               <p className="text-2xl font-bold text-blue-400">{user?.points || 0}</p>
@@ -242,6 +248,13 @@ const LangyPage = () => {
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Streak Multiplier</p>
               <p className="text-2xl font-bold text-orange-400">🔥 x{user?.multiplier || 1}</p>
             </div>
+            <button 
+              onClick={handleLogout}
+              className="ml-4 p-2 text-slate-400 hover:text-red-400 transition-colors border border-slate-700 rounded-lg hover:bg-red-500/10"
+              title="Logout"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
       )}
