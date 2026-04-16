@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Languages, Trophy, Zap, Globe, Github, LogIn, Send, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 

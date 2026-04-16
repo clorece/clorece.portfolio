@@ -105,9 +105,9 @@ async def callback(code: str):
         "avatar": user_data["avatar"]
     })
     
-    # Redirect back to your GitHub Pages portfolio
+    # Redirect back to your GitHub Pages portfolio using HashRouter
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    return RedirectResponse(f"{frontend_url}/langy?token={access_token}")
+    return RedirectResponse(f"{frontend_url}/#/langy?token={access_token}")
 
 @app.get("/api/user/stats")
 async def get_stats(user = Depends(get_current_user)):
