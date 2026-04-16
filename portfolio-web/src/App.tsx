@@ -3,6 +3,8 @@ import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'reac
 import { motion, AnimatePresence } from 'framer-motion'
 import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw, Bot, ExternalLink } from 'lucide-react'
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:10000/api"
+
 // --- Components ---
 
 const Navbar = () => (
@@ -102,7 +104,6 @@ const LangyPage = () => {
   const [timeLeft, setTimeLeft] = useState('')
   const [languages, setLanguages] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:10000/api"
 
   useEffect(() => {
     fetchLanguages()
@@ -688,7 +689,7 @@ const Footer = () => {
 
   useEffect(() => {
     // Dynamically fetch the public Client ID from the backend config
-    fetch('/api/config')
+    fetch(`${API_BASE}/config`)
       .then(res => res.json())
       .then(data => setClientId(data.clientId))
       .catch(err => console.error("Config fetch error:", err));
@@ -699,7 +700,7 @@ const Footer = () => {
     : "#";
 
   return (
-    <footer className="mt-20 py-16 px-6 border-t border-slate-800 bg-slate-900/30 backdrop-blur-xl">
+    <footer className="relative z-10 mt-20 py-16 px-6 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 text-center md:text-left">
         <div>
           <h3 className="text-3xl font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
