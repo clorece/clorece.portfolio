@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'reac
 import { motion, AnimatePresence } from 'framer-motion'
 import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw, Bot, ExternalLink } from 'lucide-react'
 
-const API_BASE = "/api"
+const API_BASE = import.meta.env.VITE_API_URL || "/api"
 
 // --- Components ---
 
