@@ -53,6 +53,8 @@ async def get_current_user(request: Request):
 
 @app.on_event("startup")
 async def startup_event():
+    # Initialize database pool
+    database.init_pool()
     # Load ML model on start
     print("Pre-loading ML model...")
     ml_assistant.get_model()

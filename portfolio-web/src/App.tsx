@@ -216,54 +216,83 @@ const LangyPage = () => {
       </div>
 
       {!challenge ? (
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-slate-800/50 p-8 rounded-3xl border border-slate-700">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-slate-800/50 p-8 rounded-3xl border border-slate-700 mb-8">
             <h4 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Zap className="text-emerald-400" /> Start Practice
+              <Zap className="text-emerald-400" /> Challenge Configuration
             </h4>
-            <div className="flex gap-4 mb-6">
+            
+            <p className="text-sm text-slate-400 mb-2 uppercase tracking-widest font-bold">1. Choose Difficulty</p>
+            <div className="flex gap-4 mb-8">
               <button 
                 onClick={() => setCategory('Word')}
-                className={`flex-1 py-2 rounded-lg border ${category === 'Word' ? 'bg-emerald-600 border-emerald-500' : 'border-slate-700 hover:bg-slate-800'}`}
-              >Word</button>
+                className={`flex-1 py-3 rounded-xl border font-bold transition-all ${category === 'Word' ? 'bg-emerald-600 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'border-slate-700 hover:bg-slate-800'}`}
+              >
+                Word <span className="block text-xs font-normal opacity-60">Base: 15 Pts</span>
+              </button>
               <button 
                 onClick={() => setCategory('Sentence')}
-                className={`flex-1 py-2 rounded-lg border ${category === 'Sentence' ? 'bg-emerald-600 border-emerald-500' : 'border-slate-700 hover:bg-slate-800'}`}
-              >Sentence</button>
+                className={`flex-1 py-3 rounded-xl border font-bold transition-all ${category === 'Sentence' ? 'bg-emerald-600 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'border-slate-700 hover:bg-slate-800'}`}
+              >
+                Sentence <span className="block text-xs font-normal opacity-60">Base: 30 Pts</span>
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {['Spanish', 'French', 'Japanese', 'German'].map(lang => (
+
+            <p className="text-sm text-slate-400 mb-2 uppercase tracking-widest font-bold">2. Select Language</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+              {['Spanish', 'French', 'Japanese', 'German', 'Italian', 'Korean', 'Chinese', 'Russian'].map(lang => (
                 <button 
                   key={lang}
-                  onClick={() => startChallenge(lang, 'practice')}
-                  disabled={loading}
-                  className="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-4 rounded-xl font-semibold disabled:opacity-50"
+                  onClick={() => {
+                    const type = user?.can_do_daily ? 'daily' : 'practice';
+                    // We'll let the user choose the mode below instead of auto-starting
+                  }}
+                  className="bg-slate-900 hover:bg-slate-800 border border-slate-700 p-3 rounded-xl font-semibold text-sm transition-all focus:ring-2 focus:ring-emerald-500 outline-none"
+                  id={`lang-${lang}`}
                 >
                   {lang}
                 </button>
               ))}
             </div>
-          </div>
 
-          <div className="bg-gradient-to-br from-indigo-900/50 to-purple-900/50 p-8 rounded-3xl border border-indigo-500/30">
-            <h4 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Trophy className="text-yellow-400" /> Daily Challenge
-            </h4>
-            <p className="text-slate-300 mb-8">
-              Test your skills once a day to earn points and grow your multiplier!
-            </p>
-            {user?.can_do_daily ? (
-              <button 
-                onClick={() => startChallenge('Spanish', 'daily')}
-                disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all disabled:opacity-50"
-              >
-                Launch Daily Challenge
-              </button>
-            ) : (
-              <div className="text-center p-4 bg-slate-900/50 rounded-xl border border-slate-700 text-slate-400">
-                Come back tomorrow! 
+            <div className="pt-6 border-t border-slate-700 flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <button 
+                  onClick={() => {
+                    const activeLang = (document.activeElement as any)?.id?.split('lang-')[1] || 'Spanish';
+                    startChallenge(activeLang, 'practice');
+                  }}
+                  disabled={loading}
+                  className="w-full bg-slate-700 hover:bg-slate-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                   Practice Mode
+                </button>
               </div>
+              
+              <div className="flex-1">
+                {user?.can_do_daily ? (
+                  <button 
+                    onClick={() => {
+                      const activeLang = (document.activeElement as any)?.id?.split('lang-')[1] || 'Spanish';
+                      startChallenge(activeLang, 'daily');
+                    }}
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50"
+                  >
+                    <Trophy size={18} /> Daily (x{user?.multiplier} Multiplier)
+                  </button>
+                ) : (
+                  <div className="h-full flex items-center justify-center px-4 bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-500 text-sm font-medium italic">
+                    Daily completed! Come back tomorrow.
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {user?.can_do_daily && (
+              <p className="text-center text-xs text-slate-500 mt-4">
+                Daily Win Reward: <span className="text-emerald-400 font-bold">{ (category === 'Word' ? 15 : 30) * (user?.multiplier || 1) } Points</span>
+              </p>
             )}
           </div>
         </div>
