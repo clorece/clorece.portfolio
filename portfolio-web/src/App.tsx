@@ -97,7 +97,24 @@ const LangyPage = () => {
   const [isDaily, setIsDaily] = useState(false)
   const [isInverse, setIsInverse] = useState(false)
   const [dbError, setDbError] = useState(false)
+  const [timeLeft, setTimeLeft] = useState('')
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:10000/api"
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date()
+      const midnight = new Date()
+      midnight.setHours(24, 0, 0, 0)
+      const diff = midnight.getTime() - now.getTime()
+      
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+      
+      setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const urlToken = searchParams.get('token')
@@ -175,7 +192,7 @@ const LangyPage = () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           language: challenge.language,
@@ -194,56 +211,40 @@ const LangyPage = () => {
     setLoading(false)
   }
 
-  if (!token) {
-    return (
-      <div className="pt-40 flex flex-col items-center px-4 text-center">
-        <Languages size={64} className="text-emerald-500 mb-6" />
-        <h2 className="text-4xl font-bold mb-4">Langy Web</h2>
-        <p className="text-slate-400 mb-8 max-w-md">
-          Practice languages and build your streak directly from your browser.
-        </p>
-        <a 
-          href={`${API_BASE}/auth/login`}
-          className="bg-[#5865F2] hover:bg-[#4752C4] px-10 py-4 rounded-full font-bold flex items-center gap-3 transition-all shadow-xl"
-        >
-          <LogIn size={20} /> Login with Discord
-        </a>
-      </div>
-    )
-  }
-
   return (
     <div className="pt-32 max-w-5xl mx-auto px-4 pb-20">
       {/* User Header */}
-      <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-slate-800/30 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm gap-6">
-        <div className="flex items-center gap-4">
-          {user?.avatar ? (
-            <img 
-              src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`} 
-              alt="Profile"
-              className="w-14 h-14 rounded-full border-2 border-emerald-500 shadow-lg shadow-emerald-500/20"
-            />
-          ) : (
-            <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center font-bold text-2xl text-slate-900">
-              {user?.username?.[0].toUpperCase()}
+      {token && user && (
+        <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-slate-800/30 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm gap-6">
+          <div className="flex items-center gap-4">
+            {user?.avatar ? (
+              <img 
+                src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`} 
+                alt="Profile"
+                className="w-14 h-14 rounded-full border-2 border-emerald-500 shadow-lg shadow-emerald-500/20"
+              />
+            ) : (
+              <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center font-bold text-2xl text-slate-900">
+                {user?.username?.[0].toUpperCase()}
+              </div>
+            )}
+            <div>
+              <h3 className="font-bold text-xl">{user?.username}</h3>
+              <p className="text-sm text-slate-400">Level: Language Learner</p>
             </div>
-          )}
-          <div>
-            <h3 className="font-bold text-xl">{user?.username}</h3>
-            <p className="text-sm text-slate-400">Level: Language Learner</p>
+          </div>
+          <div className="flex gap-8">
+            <div className="text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Points</p>
+              <p className="text-2xl font-bold text-blue-400">{user?.points || 0}</p>
+            </div>
+            <div className="text-center border-l border-slate-700 pl-8">
+              <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Streak Multiplier</p>
+              <p className="text-2xl font-bold text-orange-400">🔥 x{user?.multiplier || 1}</p>
+            </div>
           </div>
         </div>
-        <div className="flex gap-8">
-          <div className="text-center">
-            <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Points</p>
-            <p className="text-2xl font-bold text-blue-400">{user?.points || 0}</p>
-          </div>
-          <div className="text-center border-l border-slate-700 pl-8">
-            <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Streak Multiplier</p>
-            <p className="text-2xl font-bold text-orange-400">🔥 x{user?.multiplier || 1}</p>
-          </div>
-        </div>
-      </div>
+      )}
 
       {dbError && (
         <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
@@ -306,7 +307,14 @@ const LangyPage = () => {
                    Practice Only
                 </button>
                 
-                {user?.can_do_daily ? (
+                {!token ? (
+                  <a 
+                    href={`${API_BASE}/auth/login`}
+                    className="flex-1 bg-[#5865F2] hover:bg-[#4752C4] py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl text-white"
+                  >
+                    <LogIn size={20} /> Login for Daily
+                  </a>
+                ) : user?.can_do_daily ? (
                   <button 
                     onClick={() => startChallenge('daily')}
                     disabled={loading}
@@ -315,18 +323,18 @@ const LangyPage = () => {
                     <Trophy size={18} /> Launch Daily
                   </button>
                 ) : (
-                  <div className="flex-1 h-full flex items-center justify-center px-4 bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-500 text-sm font-medium italic">
-                    Daily Challenge Complete!
+                  <div className="flex-1 h-full flex flex-col items-center justify-center px-4 bg-slate-900/50 rounded-2xl border border-slate-800 text-slate-500 text-sm font-medium">
+                    <span className="italic opacity-60">Next Daily In:</span>
+                    <span className="font-mono text-lg text-emerald-500/80">{timeLeft}</span>
                   </div>
                 )}
               </div>
               
-              {user?.can_do_daily && (
+              {(!token || user?.can_do_daily) && (
                 <p className="text-center text-xs text-slate-500 mt-4 uppercase tracking-tighter">
                   Potential Reward: <span className="text-emerald-400 font-bold">{(category === 'Word' ? 15 : 30) * (user?.multiplier || 1)} Pts</span>
                 </p>
               )}
-
               {isInverse && (
                 <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-3">
                   <Globe size={20} className="text-amber-500 shrink-0 mt-0.5" />
