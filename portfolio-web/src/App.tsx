@@ -546,8 +546,7 @@ const LangyPage = () => {
           <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">About the Project</h4>
           <p className="text-slate-400 leading-relaxed mb-6">
             Langy is a demonstration of modern Natural Language Processing (NLP) in an interactive setting. 
-            By using semantic embeddings and hierarchical linguistic analysis, Langy understands the <em>meaning</em> 
-            behind your translations rather than just checking for exact character matches.
+            By using semantic embeddings and hierarchical linguistic analysis, Langy understands the <em>meaning</em> behind your translations rather than just checking for exact character matches.
           </p>
           <div className="flex gap-4">
             <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-400 uppercase">Sentence Transformers</span>
@@ -600,7 +599,7 @@ const LangyPage = () => {
               <EyeOff size={18} className="text-red-400" /> What we NEVER access
             </h5>
             <ul className="text-xs text-slate-500 space-y-2 leading-relaxed">
-              <li>• Your <strong>Email Address</strong> isn't even requested.</li>
+              <li>• Your <strong>Email Address</strong> is never requested.</li>
               <li>• Your <strong>Server List</strong> and private messages.</li>
               <li>• Any information not marked as 'Public' on Discord.</li>
             </ul>
