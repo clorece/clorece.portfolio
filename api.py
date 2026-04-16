@@ -141,6 +141,12 @@ async def get_challenge(language: str, category: str = "Word", word: Optional[st
 @app.post("/api/grade")
 async def grade_challenge(data: dict, user = Depends(get_current_user)):
     user_id = user["id"]
+    username = user.get("username")
+    avatar = user.get("avatar")
+    
+    # Sync metadata every time they play to ensure leaderboard is correct
+    database.update_user_metadata(user_id, username, avatar)
+
     language = data.get("language")
     original_english = data.get("original_english")
     user_input = data.get("user_input")

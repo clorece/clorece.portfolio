@@ -11,10 +11,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 connection_pool = None
 
 def init_db():
-    """Creates the users table if it does not exist and adds missing columns."""
-    if not connection_pool:
-        return
-    
+    if not connection_pool: return
     conn = None
     try:
         conn = connection_pool.getconn()
@@ -29,7 +26,6 @@ def init_db():
                     avatar TEXT
                 )
             ''')
-            # Ensure columns exist if table was created earlier
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT")
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT")
             conn.commit()
@@ -37,25 +33,37 @@ def init_db():
     except Exception as e:
         print(f"❌ Error initializing database tables: {e}")
     finally:
-        if conn:
-            connection_pool.putconn(conn)
+        if conn: connection_pool.putconn(conn)
 
 def init_pool():
     global connection_pool
-    if not DATABASE_URL:
-        print("❌ DATABASE_URL is missing!")
-        return
+    if not DATABASE_URL: return
     try:
         connection_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
-        print("✅ Database connection pool established.")
         init_db()
     except Exception as e:
-        print(f"❌ FAILED to connect to database: {e}")
         connection_pool = None
 
+def update_user_metadata(user_id: str, username: str, avatar: str):
+    """Ensures username and avatar are always up to date in the DB."""
+    if not connection_pool or not username: return
+    conn = None
+    try:
+        conn = connection_pool.getconn()
+        with conn.cursor() as c:
+            c.execute('''
+                INSERT INTO users (user_id, username, avatar)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (user_id) DO UPDATE SET
+                    username = EXCLUDED.username,
+                    avatar = EXCLUDED.avatar
+            ''', (user_id, username, avatar))
+            conn.commit()
+    finally:
+        if conn: connection_pool.putconn(conn)
+
 def get_user(user_id: str) -> Tuple[int, int, Optional[str]]:
-    if not connection_pool:
-        return 0, 1, None
+    if not connection_pool: return 0, 1, None
     conn = None
     try:
         conn = connection_pool.getconn()
@@ -63,12 +71,8 @@ def get_user(user_id: str) -> Tuple[int, int, Optional[str]]:
             c.execute('SELECT points, multiplier, last_daily_date FROM users WHERE user_id = %s', (str(user_id),))
             row = c.fetchone()
             return row if row else (0, 1, None)
-    except Exception as e:
-        print(f"Database error in get_user: {e}")
-        return 0, 1, None
     finally:
-        if conn:
-            connection_pool.putconn(conn)
+        if conn: connection_pool.putconn(conn)
 
 def evaluate_multiplier(multiplier: int, last_daily_date: Optional[str]) -> int:
     if not last_daily_date: return 1

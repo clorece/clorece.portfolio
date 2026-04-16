@@ -383,8 +383,22 @@ const LangyPage = () => {
                       {result.is_correct ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
                       {result.is_correct ? 'Correct!' : 'Incorrect'}
                     </div>
-                    <p className="text-2xl font-bold mb-2">Expected: <span className="text-emerald-400">{isInverse ? challenge.translated_word : result.expected}</span></p>
-                    <p className="text-slate-400 mb-8 italic text-sm">"{result.reason}"</p>
+
+                    <div className="mb-8">
+                      <p className="text-sm text-slate-500 uppercase tracking-widest mb-1">Accuracy Score</p>
+                      <p className={`text-4xl font-black ${result.is_correct ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {(result.score * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2 mb-8 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                      <p className="text-xl font-bold text-slate-200">
+                        Expected: <span className="text-emerald-400">{isInverse ? challenge.translated_word : result.expected}</span>
+                      </p>
+                      <p className="text-slate-400 italic text-sm leading-relaxed">
+                        "{result.reason}"
+                      </p>
+                    </div>
                     {result.earned && (
                       <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl mb-8">
                         <p className="text-emerald-400 font-bold text-xl">+ {result.earned} Points!</p>
