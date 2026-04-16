@@ -407,18 +407,36 @@ const LangyPage = () => {
               <Trophy className="text-yellow-500" size={20} /> Leaderboard
             </h4>
             <div className="space-y-4">
-              {leaderboard.length > 0 ? leaderboard.map((entry, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-800">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-slate-500 w-4">{idx + 1}.</span>
-                    <div>
-                      <p className="text-sm font-bold truncate max-w-[100px]">User {entry[0].slice(-4)}</p>
-                      <p className="text-[10px] text-slate-500">🔥 x{entry[2]}</p>
+              {leaderboard.length > 0 ? leaderboard.map((entry, idx) => {
+                const [uid, pts, mult, username, avatar] = entry;
+                return (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs font-bold text-slate-500 w-4">{idx + 1}.</span>
+                      {avatar ? (
+                        <img 
+                          src={`https://cdn.discordapp.com/avatars/${uid}/${avatar}.png`} 
+                          alt="" 
+                          className="w-8 h-8 rounded-full border border-slate-700"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center text-[10px] font-bold">
+                          {(username || 'U')[0].toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate text-slate-200">
+                          {username || `User ${uid.slice(-4)}`}
+                        </p>
+                        <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                          🔥 x{mult} Streak
+                        </p>
+                      </div>
                     </div>
+                    <p className="text-sm font-black text-emerald-400 ml-2 whitespace-nowrap">{pts} <span className="text-[10px] font-normal text-slate-500">pts</span></p>
                   </div>
-                  <p className="text-sm font-bold text-blue-400">{entry[1]} pts</p>
-                </div>
-              )) : (
+                );
+              }) : (
                 <p className="text-center text-slate-500 text-sm py-10 italic">No rankings yet...</p>
               )}
             </div>

@@ -161,13 +161,13 @@ async def grade_challenge(data: dict, user = Depends(get_current_user)):
         if is_daily:
             if database.can_do_daily(user_id):
                 base_points = 15 if category == "Word" else 30
-                earned, total, streak = database.reward_daily(user_id, base_points)
+                earned, total, streak = database.reward_daily(user_id, base_points, user.get("username"), user.get("avatar"))
                 result.update({"earned": earned, "total": total, "streak": streak})
             else:
                 result.update({"error": "Daily already completed today."})
     else:
         if is_daily:
-            total, streak = database.fail_daily(user_id)
+            total, streak = database.fail_daily(user_id, user.get("username"), user.get("avatar"))
             result.update({"total": total, "streak": streak})
 
     return result
