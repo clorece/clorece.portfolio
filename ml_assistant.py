@@ -114,7 +114,7 @@ def get_score_reason(original_eng: str, user_input: str, user_eng_guess: str, la
     
     # 1. Handle Exact/Grammar matches first
     if original_eng == user_input or original_eng == user_eng_guess:
-        return prefix + f"Perfect! **'{user_input}'** is exactly what I was looking for."
+        return prefix + f"Perfect! **{user_input}** is exactly what I was looking for."
 
     if original_eng == user_eng_guess + 's' or user_eng_guess == original_eng + 's' or \
        original_eng == user_eng_guess + 'es' or user_eng_guess == original_eng + 'es':
@@ -135,22 +135,22 @@ def get_score_reason(original_eng: str, user_input: str, user_eng_guess: str, la
         if lexical_score >= 0.85:
             return prefix + "Excellent! That's a very accurate translation."
         
-        msg = f"Good job! **'{user_input}'** is a valid translation."
+        msg = f"Good job! **{user_input}** is a valid translation."
         if user_def and user_def.lower() != original_eng.lower():
-            msg += f" It primarily means *'{user_def}'*, which is a great match for *'{original_eng}'*."
+            msg += f" It primarily means *{user_def}*, which is a great match for *{original_eng}*."
         return prefix + msg
     else:
         # INCORRECT
         msg = f"That doesn't seem right. "
         if user_def:
-            msg += f"You typed **'{user_input}'**, which means *'{user_def}'* in this context. "
+            msg += f"You typed **{user_input}**, which means *{user_def}* in this context. "
         else:
-            msg += f"The system interpreted **'{user_input}'** as **'{user_eng_guess}'**. "
+            msg += f"The system interpreted **{user_input}** as **{user_eng_guess}**. "
             
         if orig_def:
-            msg += f"However, I was looking for a word that means *'{orig_def}'* (**{original_eng}**)."
+            msg += f"However, I was looking for a word that means *{orig_def}* (**{original_eng}**)."
         else:
-            msg += f"However, I was looking for **'{original_eng}'**."
+            msg += f"However, I was looking for **{original_eng}**."
             
         return prefix + msg
 

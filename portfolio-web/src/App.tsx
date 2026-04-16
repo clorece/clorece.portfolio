@@ -9,11 +9,14 @@ const API_BASE = import.meta.env.VITE_API_URL || "/api"
 
 const renderMarkdown = (text: string) => {
   if (!text) return null;
-  // Simple regex to replace **text** with bold elements
-  const parts = text.split(/(\*\*.*?\*\*)/g);
+  // Handle bold (**text**) and italics (*text*)
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={i} className="font-bold text-slate-200">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <em key={i} className="italic text-slate-300">{part.slice(1, -1)}</em>;
     }
     return part;
   });
