@@ -10,6 +10,31 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 connection_pool = None
 
+def init_db():
+    """Creates the users table if it does not exist."""
+    if not connection_pool:
+        return
+    
+    conn = None
+    try:
+        conn = connection_pool.getconn()
+        with conn.cursor() as c:
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id TEXT PRIMARY KEY,
+                    points INTEGER DEFAULT 0,
+                    multiplier INTEGER DEFAULT 1,
+                    last_daily_date TEXT
+                )
+            ''')
+            conn.commit()
+            print("✅ Database tables initialized.")
+    except Exception as e:
+        print(f"❌ Error initializing database tables: {e}")
+    finally:
+        if conn:
+            connection_pool.putconn(conn)
+
 def init_pool():
     global connection_pool
     if not DATABASE_URL:
@@ -17,9 +42,10 @@ def init_pool():
         return
 
     try:
-        # We use SimpleConnectionPool to manage connections
         connection_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
         print("✅ Database connection pool established.")
+        # Create tables immediately after connecting
+        init_db()
     except Exception as e:
         print(f"❌ FAILED to connect to database: {e}")
         connection_pool = None

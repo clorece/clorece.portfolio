@@ -217,9 +217,17 @@ const LangyPage = () => {
       {/* User Header */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-slate-800/30 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center font-bold text-2xl text-slate-900">
-            {user?.username?.[0].toUpperCase()}
-          </div>
+          {user?.avatar ? (
+            <img 
+              src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`} 
+              alt="Profile"
+              className="w-14 h-14 rounded-full border-2 border-emerald-500 shadow-lg shadow-emerald-500/20"
+            />
+          ) : (
+            <div className="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center font-bold text-2xl text-slate-900">
+              {user?.username?.[0].toUpperCase()}
+            </div>
+          )}
           <div>
             <h3 className="font-bold text-xl">{user?.username}</h3>
             <p className="text-sm text-slate-400">Level: Language Learner</p>
