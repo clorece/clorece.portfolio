@@ -78,9 +78,13 @@ async def background_initialization():
         
     try:
         # 3. Pre-load ML model
-        print("[ML] Pre-loading ML model in background...")
+        print("[ML] Pre-loading Similarity/MT models in background...")
+        # Load Similarity (MiniLM)
         ml_assistant.get_model()
-        print("[SUCCESS] ML model loaded in background.")
+        # Load Local MT (NLLB)
+        import nllb_engine
+        nllb_engine.pre_load()
+        print("[SUCCESS] All ML models loaded in background.")
     except Exception as e:
         print(f"[ERROR] Model background init error: {e}")
 
@@ -89,7 +93,7 @@ async def startup_event():
     # Trigger all long-running tasks in the background
     # This allows FastAPI to start listening on port 7860 immediately
     asyncio.create_task(background_initialization())
-    asyncio.create_task(start_bot())
+    # asyncio.create_task(start_bot())  # Temporarily disabled due to Discord rate limits
     asyncio.create_task(db_heartbeat())
     print("[API LIVE] Port opened. App is live while resources load in background.")
 

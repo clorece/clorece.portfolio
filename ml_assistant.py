@@ -1,11 +1,7 @@
 import random
 import os
-import difflib
-import nltk
-from deep_translator import GoogleTranslator
 from random_word import RandomWords
-
-# Accuracy Engine Imports
+import nllb_engine
 import accuracy
 
 # Lazy load model logic moved to accuracy.semantic, but we keep the helper if needed internally
@@ -54,9 +50,20 @@ def get_random_english_word(category: str = "Word") -> str:
     return random.choice(COMMON_WORDS)
 
 def is_language_supported(lang: str) -> bool:
+    """
+    Checks if a language is supported either by the local NLLB engine 
+    or the Google Translate fallback.
+    """
+    lang_lower = lang.lower()
+    # 1. Check local NLLB map
+    if lang_lower in nllb_engine.NLLBTranslator.LANG_MAP:
+        return True
+    
+    # 2. Check Google fallback
     try:
+        from deep_translator import GoogleTranslator
         supported = GoogleTranslator().get_supported_languages()
-        return lang.lower() in supported
+        return lang_lower in supported
     except:
         return True
 
@@ -65,21 +72,31 @@ def generate_challenge(language: str, word: str = None, category: str = "Word") 
         return "error", f"'{language}' is not in the supported language list. Try `/language`."
     english_word = word if word else get_random_english_word(category)
     try:
-        translator = GoogleTranslator(source='english', target=language.lower())
-        translated = translator.translate(english_word)
+        translated = translate_text(english_word, source='english', target=language.lower())
         return english_word.lower(), translated
     except Exception as e:
         return "error", str(e)
 
 # Modular Translation Wrapper
 def translate_text(text: str, source: str = 'auto', target: str = 'english') -> str:
+    """
+    Attempts to translate using the local NLLB engine first, 
+    with a fallback to Google Translate for niche languages.
+    """
     try:
+        # 1. Try Local NLLB Engine
+        result = nllb_engine.translate(text, source=source, target=target)
+        if result:
+            return result.lower()
+            
+        # 2. Fallback to Google if NLLB fails
+        from deep_translator import GoogleTranslator
         translator = GoogleTranslator(source=source, target=target)
         return translator.translate(text).lower()
     except Exception:
         return text.lower()
 
-def get_score_reason(original: str, user_input: str, semantic_score: float, lexical_score: float, wordnet_sim: float, wordnet_desc: str) -> str:
+def get_score_reason(original: str, user_input: str, semantic_score: float, lexical_score: float, chrf_score: float, wordnet_sim: float, wordnet_desc: str) -> str:
     original = original.lower()
     user_input = user_input.lower()
     
@@ -95,16 +112,15 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
         return "Correct concept! You just used a different grammatical form (singular/plural)."
 
     # 2. Check for High Confidence Matches
-    if semantic_score >= 0.96 and lexical_score >= 0.90:
-        return "Spot on! Perfect semantic and near-perfect spelling match."
+    if semantic_score >= 0.95:
+        return "Spot on! Perfect semantic alignment with the expected meaning."
     
     if wordnet_sim >= 1.0:
         return wordnet_desc
 
-    # 3. Usage Gap Detection (High Lexical, Lower Semantic)
-    # This catches cases like "You can say that again" vs "Say that again"
-    if lexical_score >= 0.80 and semantic_score < 0.70:
-        return "You used the right words, but the overall meaning or usage as a phrase is different."
+    # 3. Usage Gap Detection (High Lexical/chrF, Lower Semantic)
+    if (lexical_score >= 0.80 or chrf_score >= 0.85) and semantic_score < 0.65:
+        return "You used the right words/characters, but the overall meaning or usage as a phrase is different."
 
     # 4. Handle Intermediate Scores
     if wordnet_desc and wordnet_sim >= 0.60:
@@ -114,7 +130,7 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
         return f"Very close! Likely a minor typo: **'{user_input}'** vs **'{original}'**."
         
     if semantic_score >= 0.75:
-        if lexical_score < 0.60:
+        if lexical_score < 0.60 and chrf_score < 0.70:
             return "The meaning is there, but the wording is quite different from what we expected."
         return "Close enough! The words share highly similar semantic meaning."
 
@@ -124,11 +140,8 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
         orig_syn = wordnet.synsets(original)
         user_syn = wordnet.synsets(user_input)
         if orig_syn and user_syn:
-            orig_def = orig_syn[0].definition()
-            user_def = user_syn[0].definition()
-            # Truncate and clean definitions
-            orig_def = (orig_def[:60] + '..') if len(orig_def) > 60 else orig_def
-            user_def = (user_def[:60] + '..') if len(user_def) > 60 else user_def
+            orig_def = (orig_syn[0].definition()[:60] + '..') if len(orig_syn[0].definition()) > 60 else orig_syn[0].definition()
+            user_def = (user_syn[0].definition()[:60] + '..') if len(user_syn[0].definition()) > 60 else user_syn[0].definition()
             
             if semantic_score >= 0.45:
                 return f"Almost! But **'{user_input}'** usually refers to *'{user_def}'*, while **'{original}'** is *'{orig_def}'*."
@@ -137,47 +150,46 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
 
     if semantic_score >= 0.50:
         return "The words are related in context, but the specific intention or phrasing is off."
-    return "The words have fundamentally different semantic meanings."
+    return "The translation has fundamentally different semantic meanings."
 
 def process_user_input_and_grade(language: str, original_english: str, user_input: str, category: str = "Word") -> tuple[bool, float, str]:
     """
-    Takes raw user input, translates it, and grades it using the modular accuracy engine with category-aware weighting.
+    MT-Informed Grading:
+    1. Cross-checks user input against a reference translation in the target language (chrF).
+    2. Performs Round-Trip Translation (RTT) to English using NLLB.
+    3. Grades using semantic token alignment (BERTScore-Lite), lexical similarity, and WordNet.
     """
-    # 1. Translate
-    user_english_guess = translate_text(user_input)
+    # 1. Get Target Language Reference for chrF check
+    # We use local NLLB for this now.
+    reference_target = translate_text(original_english, source='english', target=language.lower())
+    chrf_target_score = accuracy.get_chrf_score(reference_target, user_input.lower())
+    
+    # 2. Round-Trip Translation (Target Language -> English)
+    user_english_guess = translate_text(user_input, source=language.lower(), target='english')
         
-    # 2. Semantic Score
+    # 3. English-side metrics
     semantic_score = accuracy.get_semantic_score(original_english, user_english_guess)
-    
-    # 3. Lexical Score
     lexical_score = accuracy.get_lexical_score(original_english, user_english_guess)
-    
-    # 4. WordNet Relationship
     wordnet_sim, wordnet_desc = accuracy.get_wordnet_relationship(original_english, user_english_guess)
     
-    # 5. Hybrid Final Score with Dynamic Weighting
-    if wordnet_sim >= 1.0 or lexical_score >= 1.0:
+    # 4. Final Scoring Logic (MT-Informed weighting)
+    # If it's a perfect match on any core metric, give full credit.
+    if wordnet_sim >= 1.0 or lexical_score >= 1.0 or chrf_target_score >= 0.95:
         final_score = 1.0
     else:
         if category.lower() == "sentence":
-            # For sentences, semantic meaning is prioritized but tempered by lexical accuracy.
-            # 70% Semantic / 30% Lexical
-            final_score = (semantic_score * 0.7) + (lexical_score * 0.3)
+            # For sentences: 60% Semantic (Token Alignment) / 20% chrF (Target) / 20% Lexical (English)
+            final_score = (semantic_score * 0.6) + (chrf_target_score * 0.2) + (lexical_score * 0.2)
         else:
-            # For words, WordNet and Lexical are more important for identifying synonyms/typos.
-            # Weighted Average: Semantic (60%), Lexical (20%), WordNet (20%)
-            if semantic_score < 0.35:
-                final_score = semantic_score
-            else:
-                final_score = (semantic_score * 0.6) + (lexical_score * 0.2) + (wordnet_sim * 0.2)
+            # For words: 50% Semantic / 20% WordNet / 20% chrF (Target) / 10% Lexical (English)
+            final_score = (semantic_score * 0.5) + (wordnet_sim * 0.2) + (chrf_target_score * 0.2) + (lexical_score * 0.1)
             
     final_score = max(0.0, min(1.0, final_score))
     
     # Passing threshold
-    is_correct = final_score >= 0.75
+    is_correct = final_score >= 0.72
     
-    # 6. Generate detailed reasoning
-    reason = get_score_reason(original_english, user_english_guess, semantic_score, lexical_score, wordnet_sim, wordnet_desc)
+    reason = get_score_reason(original_english, user_english_guess, semantic_score, lexical_score, chrf_target_score, wordnet_sim, wordnet_desc)
     
     return is_correct, round(final_score, 3), reason
 
