@@ -489,6 +489,12 @@ const LangyPage = () => {
                 {isInverse ? challenge.english_word : challenge.translated_word}
               </h1>
 
+              {isInverse && challenge.meaning_hint && (
+                <p className="text-center text-slate-400 italic mb-12 -mt-8">
+                  {challenge.meaning_hint}
+                </p>
+              )}
+
               <AnimatePresence>
                 {!result ? (
                   <div className="flex gap-4">

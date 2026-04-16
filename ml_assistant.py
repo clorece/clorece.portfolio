@@ -197,40 +197,41 @@ async def process_user_input_and_grade(language: str, original_english: str, use
     
     return is_correct, round(final_score, 3), reason
 
+def get_meaning_hint(word: str) -> str:
+    from nltk.corpus import wordnet
+    try:
+        # Fetch synsets for the word, replacing spaces with underscores for WordNet
+        syns = wordnet.synsets(word.replace(' ', '_'))
+        if not syns:
+            return ""
+            
+        # If multiple distinct meanings exist, show up to the top 3
+        meanings = []
+        seen_defs = set()
+        for s in syns:
+            # Get the core definition (before any semicolon to keep it concise)
+            core_def = s.definition().split(';')[0].strip()
+            if core_def not in seen_defs:
+                meanings.append(core_def)
+                seen_defs.add(core_def)
+            if len(meanings) >= 3:
+                break
+                
+        if len(meanings) > 1:
+            return f"Potential Contexts: {', '.join(meanings)}"
+        elif meanings:
+            return f"Context: {meanings[0]}"
+    except Exception:
+        pass
+    return ""
+
 def formatPrompt_NativeToEng(language: str, translated_word: str) -> str:
     return f"Translate this **{language.capitalize()}** word to English: **{translated_word}**"
 
 def formatPrompt_EngToNative(language: str, english_word: str) -> str:
-    from nltk.corpus import wordnet
-    
-    try:
-        # Fetch synsets for the english word, replacing spaces with underscores for WordNet
-        syns = wordnet.synsets(english_word.replace(' ', '_'))
-        meaning_hint = ""
-        
-        if syns:
-            # If multiple distinct meanings exist, show up to the top 3
-            meanings = []
-            seen_defs = set()
-            for s in syns:
-                # Get the core definition (before any semicolon to keep it concise)
-                core_def = s.definition().split(';')[0].strip()
-                if core_def not in seen_defs:
-                    meanings.append(core_def)
-                    seen_defs.add(core_def)
-                if len(meanings) >= 3:
-                    break
-                    
-            if len(meanings) > 1:
-                # Format as a concise list (e.g., "(mathematical, motion, etc)")
-                meaning_hint = f"\n*Potential Contexts:* {', '.join(meanings)}"
-            elif meanings:
-                meaning_hint = f"\n*Context:* {meanings[0]}"
-                
-        return f"Translate this English word to **{language.capitalize()}**: **{english_word}**{meaning_hint}"
-    except Exception:
-        # Fallback if NLTK/WordNet fails
-        return f"Translate this English word to **{language.capitalize()}**: **{english_word}**"
+    hint = get_meaning_hint(english_word)
+    meaning_hint = f"\n*{hint}*" if hint else ""
+    return f"Translate this English word to **{language.capitalize()}**: **{english_word}**{meaning_hint}"
 
 def get_model():
     return accuracy.get_model()

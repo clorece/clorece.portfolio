@@ -201,6 +201,7 @@ async def get_challenge(language: str, category: str = "Word", word: Optional[st
     return {
         "english_word": english_word,
         "translated_word": translated_word,
+        "meaning_hint": ml_assistant.get_meaning_hint(english_word),
         "language": language,
         "category": category
     }
