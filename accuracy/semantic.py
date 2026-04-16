@@ -3,6 +3,8 @@ from sentence_transformers.util import cos_sim
 # Lazy load model so bot startup isn't blocked completely
 _model = None
 
+from .utils import normalize_for_grading
+
 def get_model():
     global _model
     if _model is None:
@@ -14,10 +16,13 @@ def get_model():
 def get_semantic_score(text1: str, text2: str) -> float:
     """
     Computes cosine similarity between two pieces of text using SentenceTransformers.
-    Includes safety checks to prevent NaN on empty/invalid inputs.
+    Includes safety checks and normalization to prevent NaN on empty/invalid inputs.
     """
+    t1 = normalize_for_grading(text1)
+    t2 = normalize_for_grading(text2)
+    
     # Safety check for empty or whitespace-only strings
-    if not text1 or not text2 or not text1.strip() or not text2.strip():
+    if not t1 or not t2:
         return 0.0
         
     try:

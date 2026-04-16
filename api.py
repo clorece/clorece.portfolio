@@ -76,14 +76,14 @@ async def startup_event():
     asyncio.create_task(db_heartbeat())
 
 async def db_heartbeat():
-    """Pings the database every 24 hours to prevent Supabase from pausing."""
+    """Refreshes the leaderboard cache every 6 hours to provide a 'meaningful' use of the database connection (Keep-Alive)."""
     while True:
         try:
-            database.get_leaderboard(1)
-            print("💓 Database heartbeat successful.")
+            database.refresh_leaderboard_cache()
+            print("💓 Database heartbeat/cache refresh successful.")
         except Exception as e:
             print(f"💔 Heartbeat failed: {e}")
-        await asyncio.sleep(86400) # Wait 24 hours
+        await asyncio.sleep(21600) # Wait 6 hours (6 * 3600)
 
 @app.get("/api/auth/login")
 async def login():
@@ -209,7 +209,8 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
 
 @app.get("/api/leaderboard")
 async def get_leaderboard(limit: int = 10):
-    return database.get_leaderboard(limit)
+    # Returns the pre-fetched leaderboard cache for instant loading
+    return database.get_leaderboard_cached()
 
 @app.get("/api/languages")
 async def get_languages():

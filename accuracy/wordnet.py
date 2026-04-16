@@ -8,15 +8,19 @@ except LookupError:
     nltk.download('wordnet')
     nltk.download('omw-1.4')
 
+from .utils import normalize_for_grading
+
 def get_wordnet_relationship(original: str, user_input: str) -> tuple[float, str]:
     """
     Analyzes the relationship between two words using WordNet.
     Returns (similarity_bonus, relationship_description).
+    Includes normalization to handle punctuation.
     """
-    original = original.lower()
-    user_input = user_input.lower()
+    original = normalize_for_grading(original)
+    user_input = normalize_for_grading(user_input)
     
-    try:
+    if not original or not user_input:
+        return 0.0, ""
         orig_syns = wordnet.synsets(original)
         user_syns = wordnet.synsets(user_input)
         

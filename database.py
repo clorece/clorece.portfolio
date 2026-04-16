@@ -102,6 +102,31 @@ def evaluate_multiplier(multiplier: int, last_daily_date: Optional[str]) -> int:
     except:
         return 1
 
+import time
+
+# Global Leaderboard Cache
+_leaderboard_cache = []
+_last_refresh_time = 0
+
+def refresh_leaderboard_cache(limit: int = 10):
+    """Fetches the latest data and updates the in-memory cache."""
+    global _leaderboard_cache, _last_refresh_time
+    try:
+        data = get_leaderboard(limit)
+        if data:
+            _leaderboard_cache = data
+            _last_refresh_time = time.time()
+            print(f"📊 Leaderboard cache refreshed ({len(data)} users).")
+    except Exception as e:
+        print(f"❌ Failed to refresh leaderboard cache: {e}")
+
+def get_leaderboard_cached():
+    """Returns the pre-fetched leaderboard and the last refresh timestamp."""
+    return {
+        "players": _leaderboard_cache,
+        "last_refresh": _last_refresh_time
+    }
+
 def reward_daily(user_id: str, base_points: int, username: str = None, avatar: str = None) -> Tuple[int, int, int]:
     now_date = datetime.datetime.now().date().isoformat()
     points, multiplier, last_daily_date = get_user(user_id)
@@ -127,6 +152,10 @@ def reward_daily(user_id: str, base_points: int, username: str = None, avatar: s
                     avatar = EXCLUDED.avatar
             ''', (str(user_id), new_total, new_multiplier, now_date, username, avatar))
             conn.commit()
+            
+            # Immediately trigger a cache refresh so the user sees their new ranking
+            refresh_leaderboard_cache()
+            
             return points_earned, new_total, new_multiplier
     finally:
         if conn: connection_pool.putconn(conn)
@@ -152,6 +181,10 @@ def fail_daily(user_id: str, username: str = None, avatar: str = None) -> Tuple[
                     avatar = EXCLUDED.avatar
             ''', (str(user_id), points, 1, now_date, username, avatar))
             conn.commit()
+            
+            # Refresh cache after streak reset (though points didn't change, metadata might have)
+            refresh_leaderboard_cache()
+            
             return points, 1
     finally:
         if conn: connection_pool.putconn(conn)
@@ -173,3 +206,5 @@ def get_leaderboard(limit: int = 10) -> List[Tuple[str, int, int, str, str]]:
         if conn: connection_pool.putconn(conn)
 
 init_pool()
+# Initial cache population
+refresh_leaderboard_cache()

@@ -87,6 +87,7 @@ const LangyPage = () => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('langy_token'))
   const [user, setUser] = useState<any>(null)
   const [leaderboard, setLeaderboard] = useState<any[]>([])
+  const [lastSync, setLastSync] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [challenge, setChallenge] = useState<any>(null)
   const [answer, setAnswer] = useState('')
@@ -143,6 +144,13 @@ const LangyPage = () => {
       fetchUserStats()
     }
     fetchLeaderboard()
+    
+    // Refresh the local sync timer display every 30 seconds
+    const interval = setInterval(() => {
+      setLastSync(prev => prev) // Force re-render
+    }, 30000)
+    
+    return () => clearInterval(interval)
   }, [token])
 
   useEffect(() => {
@@ -175,7 +183,11 @@ const LangyPage = () => {
   const fetchLeaderboard = async () => {
     try {
       const res = await fetch(`${API_BASE}/leaderboard`)
-      if (res.ok) setLeaderboard(await res.json())
+      if (res.ok) {
+        const data = await res.json()
+        setLeaderboard(data.players || [])
+        setLastSync(data.last_refresh || 0)
+      }
     } catch (e) { console.error(e) }
   }
 
@@ -497,9 +509,17 @@ const LangyPage = () => {
         {/* Sidebar - Leaderboard */}
         <div className="lg:col-span-1">
           <div className="bg-slate-800/30 border border-slate-800 rounded-3xl p-6 h-full backdrop-blur-sm">
-            <h4 className="text-lg font-bold mb-6 flex items-center gap-2">
-              <Trophy className="text-yellow-500" size={20} /> Leaderboard
-            </h4>
+            <div className="flex flex-col mb-6">
+              <h4 className="text-lg font-bold flex items-center gap-2">
+                <Trophy className="text-yellow-500" size={20} /> Leaderboard
+              </h4>
+              <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Last synced: {lastSync === 0 ? 'Pending...' : 
+                  Math.floor((Date.now() / 1000 - lastSync) / 60) < 1 ? 'Just now' : 
+                  `${Math.floor((Date.now() / 1000 - lastSync) / 60)}m ago`}
+              </p>
+            </div>
             <div className="space-y-4">
               {leaderboard.length > 0 ? leaderboard.map((entry, idx) => {
                 const [uid, pts, mult, username, avatar] = entry;
