@@ -79,7 +79,7 @@ async def db_heartbeat():
     """Refreshes the leaderboard cache every 6 hours to provide a 'meaningful' use of the database connection (Keep-Alive)."""
     while True:
         try:
-            database.refresh_leaderboard_cache()
+            database.refresh_leaderboard_cache(force=True)
             print("💓 Database heartbeat/cache refresh successful.")
         except Exception as e:
             print(f"💔 Heartbeat failed: {e}")
@@ -210,6 +210,12 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
 @app.get("/api/leaderboard")
 async def get_leaderboard(limit: int = 10):
     # Returns the pre-fetched leaderboard cache for instant loading
+    return database.get_leaderboard_cached()
+
+@app.post("/api/leaderboard/refresh")
+async def refresh_leaderboard(user = Depends(get_current_user)):
+    # Forces a database re-query and updates the global cache (Auth required)
+    database.refresh_leaderboard_cache()
     return database.get_leaderboard_cached()
 
 @app.get("/api/languages")

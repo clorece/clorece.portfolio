@@ -108,14 +108,21 @@ import time
 _leaderboard_cache = []
 _last_refresh_time = 0
 
-def refresh_leaderboard_cache(limit: int = 10):
-    """Fetches the latest data and updates the in-memory cache."""
+def refresh_leaderboard_cache(limit: int = 10, force: bool = False):
+    """Fetches the latest data and updates the in-memory cache, with a 30s global cooldown."""
     global _leaderboard_cache, _last_refresh_time
+    
+    # 30-second cooldown to prevent database spam
+    now = time.time()
+    if not force and (now - _last_refresh_time < 30):
+        # We skip the DB query if it's too frequent
+        return
+
     try:
         data = get_leaderboard(limit)
         if data:
             _leaderboard_cache = data
-            _last_refresh_time = time.time()
+            _last_refresh_time = now
             print(f"📊 Leaderboard cache refreshed ({len(data)} users).")
     except Exception as e:
         print(f"❌ Failed to refresh leaderboard cache: {e}")
@@ -154,7 +161,7 @@ def reward_daily(user_id: str, base_points: int, username: str = None, avatar: s
             conn.commit()
             
             # Immediately trigger a cache refresh so the user sees their new ranking
-            refresh_leaderboard_cache()
+            refresh_leaderboard_cache(force=True)
             
             return points_earned, new_total, new_multiplier
     finally:
@@ -183,7 +190,7 @@ def fail_daily(user_id: str, username: str = None, avatar: str = None) -> Tuple[
             conn.commit()
             
             # Refresh cache after streak reset (though points didn't change, metadata might have)
-            refresh_leaderboard_cache()
+            refresh_leaderboard_cache(force=True)
             
             return points, 1
     finally:

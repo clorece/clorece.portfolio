@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff } from 'lucide-react'
+import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw } from 'lucide-react'
 
 // --- Components ---
 
@@ -88,6 +88,7 @@ const LangyPage = () => {
   const [user, setUser] = useState<any>(null)
   const [leaderboard, setLeaderboard] = useState<any[]>([])
   const [lastSync, setLastSync] = useState<number>(0)
+  const [isRefreshingLeaderboard, setIsRefreshingLeaderboard] = useState(false)
   const [loading, setLoading] = useState(false)
   const [challenge, setChallenge] = useState<any>(null)
   const [answer, setAnswer] = useState('')
@@ -189,6 +190,26 @@ const LangyPage = () => {
         setLastSync(data.last_refresh || 0)
       }
     } catch (e) { console.error(e) }
+  }
+
+  const handleRefreshLeaderboard = async () => {
+    if (isRefreshingLeaderboard) return
+    setIsRefreshingLeaderboard(true)
+    try {
+      const res = await fetch(`${API_BASE}/leaderboard/refresh`, { 
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setLeaderboard(data.players || [])
+        setLastSync(data.last_refresh || 0)
+      }
+    } catch (e) { console.error(e) }
+    finally {
+      // Small artificial delay for the animation to feel satisfying
+      setTimeout(() => setIsRefreshingLeaderboard(false), 500)
+    }
   }
 
   const handleLogout = () => {
@@ -510,9 +531,21 @@ const LangyPage = () => {
         <div className="lg:col-span-1">
           <div className="bg-slate-800/30 border border-slate-800 rounded-3xl p-6 h-full backdrop-blur-sm">
             <div className="flex flex-col mb-6">
-              <h4 className="text-lg font-bold flex items-center gap-2">
-                <Trophy className="text-yellow-500" size={20} /> Leaderboard
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-lg font-bold flex items-center gap-2">
+                  <Trophy className="text-yellow-500" size={20} /> Leaderboard
+                </h4>
+                {token && (
+                  <button 
+                    onClick={handleRefreshLeaderboard}
+                    disabled={isRefreshingLeaderboard}
+                    className={`p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-500 hover:text-emerald-400 ${isRefreshingLeaderboard ? 'animate-spin' : ''}`}
+                    title="Manual Refresh"
+                  >
+                    <RefreshCw size={16} />
+                  </button>
+                )}
+              </div>
               <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 Last synced: {lastSync === 0 ? 'Pending...' : 
