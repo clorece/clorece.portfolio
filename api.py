@@ -88,7 +88,8 @@ async def callback(code: str):
         )
         token_data = token_res.json()
         if "access_token" not in token_data:
-            return {"error": "Failed to login with Discord"}
+            print(f"Discord Token Error: {token_data}") # This will show up in Hugging Face Logs
+            return {"error": f"Discord Auth Failed: {token_data.get('error_description', token_data.get('error', 'Unknown Error'))}"}
 
         # Get user info
         user_res = await client.get(
