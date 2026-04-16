@@ -337,7 +337,7 @@ const LangyPage = () => {
               <div className="space-y-2">
                 <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 mb-3 border border-blue-500/20">1</div>
                 <h5 className="font-bold text-sm">Pick a Language</h5>
-                <p className="text-xs text-slate-500 leading-relaxed">Choose from 100+ languages and select your difficulty (Word or Sentence).</p>
+                <p className="text-xs text-slate-500 leading-relaxed">Choose from 20 top-studied languages and select your difficulty (Word or Sentence).</p>
               </div>
               <div className="space-y-2">
                 <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 mb-3 border border-emerald-500/20">2</div>

@@ -265,10 +265,9 @@ async def refresh_leaderboard(user = Depends(get_current_user)):
 @app.get("/api/languages")
 async def get_languages():
     try:
-        from deep_translator import GoogleTranslator
-        langs = GoogleTranslator().get_supported_languages()
-        # Return as title case for better UI
-        return [l.title() for l in langs]
+        # Return only the languages we have specialist tools for
+        langs = sorted([l.capitalize() for l in ml_assistant.SUPPORTED_LANGUAGES])
+        return langs
     except Exception as e:
         return ["Spanish", "French", "Japanese", "German", "Italian", "Korean", "Chinese", "Russian"]
 
