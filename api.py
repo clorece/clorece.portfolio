@@ -119,6 +119,13 @@ async def login():
     )
     return RedirectResponse(discord_url)
 
+@app.get("/api/config")
+async def get_config():
+    """Returns public configuration needed by the frontend."""
+    return {
+        "clientId": DISCORD_CLIENT_ID
+    }
+
 async def get_discord_user(access_token: str):
     # Fetch user data using global client
     try:

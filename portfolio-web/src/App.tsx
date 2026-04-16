@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw } from 'lucide-react'
+import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw, Bot, ExternalLink } from 'lucide-react'
 
 // --- Components ---
 
@@ -683,6 +683,59 @@ const LangyPage = () => {
   )
 }
 
+const Footer = () => {
+  const [clientId, setClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Dynamically fetch the public Client ID from the backend config
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => setClientId(data.clientId))
+      .catch(err => console.error("Config fetch error:", err));
+  }, []);
+
+  const inviteUrl = clientId 
+    ? `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=2147483648&scope=bot%20applications.commands`
+    : "#";
+
+  return (
+    <footer className="mt-20 py-16 px-6 border-t border-slate-800 bg-slate-900/30 backdrop-blur-xl">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 text-center md:text-left">
+        <div>
+          <h3 className="text-3xl font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+            Level up your community.
+          </h3>
+          <p className="text-slate-400 mt-3 text-lg max-w-md">
+            Bring Langy to your Discord server and start practicing with your friends today!
+          </p>
+        </div>
+        <motion.a
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
+          href={inviteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 px-10 py-5 rounded-3xl font-black text-white shadow-2xl shadow-indigo-500/40 transition-all border border-indigo-400/20 ${!clientId ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <Bot size={24} />
+          {clientId ? "Add to Discord" : "Loading..."}
+          <ExternalLink size={16} className="opacity-50" />
+        </motion.a>
+      </div>
+      <div className="max-w-6xl mx-auto mt-16 pt-8 border-t border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-6">
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+          © {new Date().getFullYear()} Clorece Portfolio | Powered by Langy AI
+        </p>
+        <div className="flex gap-8">
+          <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors text-[10px] uppercase tracking-widest font-black">Privacy</a>
+          <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors text-[10px] uppercase tracking-widest font-black">Terms</a>
+          <a href="#" className="text-slate-500 hover:text-blue-400 transition-colors text-[10px] uppercase tracking-widest font-black">Docs</a>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
 function App() {
   return (
     <Router>
@@ -692,6 +745,7 @@ function App() {
           <Route path="/" element={<><Hero /><Projects /></>} />
           <Route path="/langy" element={<LangyPage />} />
         </Routes>
+        <Footer />
       </div>
     </Router>
   )
