@@ -472,6 +472,9 @@ const LangyPage = () => {
                       <p className="text-xl font-bold text-slate-200">
                         Expected: <span className="text-emerald-400">{isInverse ? challenge.translated_word : result.expected}</span>
                       </p>
+                      <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                        You said: <span className={result.is_correct ? "text-emerald-500/70" : "text-red-400/70"}>{answer}</span>
+                      </p>
                       <p className="text-slate-400 italic text-sm leading-relaxed">
                         "{result.reason}"
                       </p>
