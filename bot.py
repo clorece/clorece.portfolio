@@ -228,31 +228,31 @@ async def start_bot():
         print("Please set your DISCORD_TOKEN in the .env file.")
         return
     
-    # We use a retry loop with exponential backoff to handle Discord rate limits (429)
-    # This is common on cloud platforms like Hugging Face when many developers share the same IP range
-    # or when the bot is restarted frequently during development.
-    retry_delay = 10  # Start with a 10-second delay
-    max_delay = 300   # Max wait of 5 minutes
+    # Refined Exponential Backoff:
+    # 30s -> 1m -> 2m -> 4m -> 8m -> 15m -> 30m
+    retry_delay = 30  
+    max_delay = 1800  # 30 minutes
     
     while True:
         try:
-            print(f"[BOT] Attempting to connect to Discord... (Backoff: {retry_delay}s)")
+            print(f"[BOT] Attempting to connect to Discord... (Current Backoff: {retry_delay}s)")
             await bot.start(token)
-            # If start() returns, it means the bot disconnected gracefully
-            break
-        except discord.errors.HTTPException as e:
-            if e.status == 429:
-                print(f"\n[DISCORD RATE LIMIT] You are being rate limited (429).")
-                print(f"Hugging Face/Discord is temporarily blocking requests. Retrying in {retry_delay}s...")
-                await asyncio.sleep(retry_delay)
-                retry_delay = min(retry_delay * 2, max_delay)
-            else:
-                print(f"[ERROR] Discord connection failed: {e}")
-                break
+            # If start() returns successfully, reset the delay for future reconnections
+            retry_delay = 30
         except Exception as e:
-            print(f"[ERROR] Unexpected bot startup error: {e}")
-            # For network-related issues, try again after a fixed delay
-            await asyncio.sleep(20)
+            print(f"\n[BOT CONNECTION ERROR] {e}")
+            
+            # Clean up half-open sessions to prevent "Unclosed client session" warnings
+            try:
+                await bot.close()
+            except:
+                pass
+                
+            print(f"Server may be rate-limited or offline. Waiting {retry_delay}s before next attempt...")
+            await asyncio.sleep(retry_delay)
+            
+            # Binary exponential backoff
+            retry_delay = min(retry_delay * 2, max_delay)
 
 if __name__ == "__main__":
     asyncio.run(start_bot())
