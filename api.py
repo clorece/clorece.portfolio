@@ -17,6 +17,9 @@ load_dotenv()
 
 app = FastAPI()
 
+# Global HTTP client with a generous timeout for cloud environments (HF/Supabase)
+httpx_client = httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=10.0))
+
 # Configure CORS for your GitHub Pages URL later
 app.add_middleware(
     CORSMiddleware,
@@ -90,6 +93,11 @@ async def startup_event():
     asyncio.create_task(db_heartbeat())
     print("[API LIVE] Port opened. App is live while resources load in background.")
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Cleanly close the global HTTP client
+    await httpx_client.aclose()
+
 async def db_heartbeat():
     """Refreshes the leaderboard cache every 6 hours to provide a 'meaningful' use of the database connection (Keep-Alive)."""
     while True:
@@ -111,11 +119,23 @@ async def login():
     )
     return RedirectResponse(discord_url)
 
+async def get_discord_user(access_token: str):
+    # Fetch user data using global client
+    try:
+        res = await httpx_client.get(
+            "https://discord.com/api/users/@me",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        return res.json()
+    except Exception as e:
+        print(f"[ERROR] Discord user fetch timeout: {e}")
+        return None
+
 @app.get("/api/auth/callback")
 async def callback(code: str):
-    async with httpx.AsyncClient() as client:
-        # Exchange code for access token
-        token_res = await client.post(
+    # Exchange code for access token using global client
+    try:
+        token_res = await httpx_client.post(
             "https://discord.com/api/oauth2/token",
             data={
                 "client_id": DISCORD_CLIENT_ID,
@@ -127,16 +147,17 @@ async def callback(code: str):
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         token_data = token_res.json()
-        if "access_token" not in token_data:
+    except Exception as e:
+        print(f"[ERROR] Token exchange timeout: {e}")
+        raise HTTPException(status_code=504, detail="Connection to Discord timed out. Please try again.")
+
+    if "access_token" not in token_data:
             print(f"Discord Token Error: {token_data}") # This will show up in Hugging Face Logs
             return {"error": f"Discord Auth Failed: {token_data.get('error_description', token_data.get('error', 'Unknown Error'))}"}
 
-        # Get user info
-        user_res = await client.get(
-            "https://discord.com/api/users/@me",
-            headers={"Authorization": f"Bearer {token_data['access_token']}"},
-        )
-        user_data = user_res.json()
+    user_data = await get_discord_user(token_data["access_token"])
+    if not user_data:
+        return {"error": "Failed to fetch user data from Discord"}
         
     # Create local JWT
     access_token = create_access_token({
