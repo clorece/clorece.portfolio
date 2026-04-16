@@ -3,7 +3,8 @@ import asyncio
 from typing import Optional
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from jose import jwt
 from datetime import datetime, timedelta
 import httpx
@@ -174,8 +175,8 @@ async def callback(code: str):
     })
     
     # Redirect back to your GitHub Pages portfolio using HashRouter
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    return RedirectResponse(f"{frontend_url}/#/langy?token={access_token}")
+    # Redirect back using the current request's origin (unified deployment)
+    return RedirectResponse(f"{request.url.scheme}://{request.url.netloc}/#/langy?token={access_token}")
 
 @app.get("/api/user/stats")
 async def get_stats(user = Depends(get_current_user)):
@@ -270,6 +271,21 @@ async def get_languages():
         return [l.title() for l in langs]
     except Exception as e:
         return ["Spanish", "French", "Japanese", "German", "Italian", "Korean", "Chinese", "Russian"]
+# SPA Fallback: Serve index.html for any 404s that aren't API calls
+# This allows React Router (Client-side routing) to work on page refresh
+@app.exception_handler(404)
+async def spa_fallback(request: Request, exc: Exception):
+    if request.url.path.startswith("/api"):
+        return JSONResponse(status_code=404, content={"detail": "API route not found"})
+    
+    index_path = os.path.join("portfolio-web/dist", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return RedirectResponse("/")
+
+# Mount the static files AFTER all /api routes
+if os.path.exists("portfolio-web/dist"):
+    app.mount("/", StaticFiles(directory="portfolio-web/dist", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
