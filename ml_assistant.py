@@ -7,7 +7,6 @@ from random_word import RandomWords
 
 # Accuracy Engine Imports
 import accuracy
-from accuracy.detectors import detect_all_mismatches
 
 # Lazy load model logic moved to accuracy.semantic, but we keep the helper if needed internally
 # Or better, just rely on accuracy.get_model()

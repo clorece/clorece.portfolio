@@ -56,7 +56,7 @@ const ProjectCard = ({ title, description, tags, link }: any) => (
         </span>
       ))}
     </div>
-    <Link to={link} className="text-blue-400 font-semibold hover:underline">View Project →</Link>
+    <Link to={link} className="text-blue-400 font-semibold hover:underline">View Project -> </Link>
   </div>
 )
 
@@ -292,7 +292,9 @@ const LangyPage = () => {
             </div>
             <div className="text-center border-l border-slate-700 pl-8">
               <p className="text-xs text-slate-400 uppercase tracking-widest mb-1">Streak Multiplier</p>
-              <p className="text-2xl font-bold text-orange-400">🔥 x{user?.multiplier || 1}</p>
+              <p className="text-2xl font-bold text-orange-400">
+                <Zap className="inline-block mr-1" size={24} /> x{user?.multiplier || 1} Streak
+              </p>
             </div>
             <button 
               onClick={handleLogout}
@@ -454,7 +456,7 @@ const LangyPage = () => {
             >
               <div className="flex justify-between items-center mb-8">
                 <span className="bg-blue-600/20 text-blue-400 px-4 py-1 rounded-full text-xs font-bold border border-blue-500/30 uppercase tracking-widest">
-                  {isDaily ? 'Daily' : 'Practice'} • {challenge.category}
+                  {isDaily ? 'Daily' : 'Practice'} - {challenge.category}
                 </span>
                 <div className={`text-xl font-mono font-bold ${timer < 10 ? 'text-red-500' : 'text-slate-400'}`}>
                   00:{timer < 10 ? `0${timer}` : timer}
@@ -576,7 +578,7 @@ const LangyPage = () => {
                           {username || `User ${uid.slice(-4)}`}
                         </p>
                         <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                          🔥 x{mult} Streak
+                          <Zap size={10} className="text-orange-400" /> x{mult} Streak
                         </p>
                       </div>
                     </div>
@@ -644,9 +646,9 @@ const LangyPage = () => {
               <ShieldCheck size={18} className="text-blue-400" /> What we store
             </h5>
             <ul className="text-xs text-slate-500 space-y-2 leading-relaxed">
-              <li>• <strong>Discord ID:</strong> To link your points to your account.</li>
-              <li>• <strong>Username & Avatar:</strong> To display on the global leaderboard.</li>
-              <li>• <strong>Game Stats:</strong> Your points, streaks, and timestamps.</li>
+              <li>- <strong>Discord ID:</strong> To link your points to your account.</li>
+              <li>- <strong>Username and Avatar:</strong> To display on the global leaderboard.</li>
+              <li>- <strong>Game Stats:</strong> Your points, streaks, and timestamps.</li>
             </ul>
           </div>
 
@@ -655,9 +657,9 @@ const LangyPage = () => {
               <EyeOff size={18} className="text-red-400" /> What we NEVER access
             </h5>
             <ul className="text-xs text-slate-500 space-y-2 leading-relaxed">
-              <li>• Your <strong>Email Address</strong> is never requested.</li>
-              <li>• Your <strong>Server List</strong> and private messages.</li>
-              <li>• Any information not marked as 'Public' on Discord.</li>
+              <li>- Your <strong>Email Address</strong> is never requested.</li>
+              <li>- Your <strong>Server List</strong> and private messages.</li>
+              <li>- Any information not marked as 'Public' on Discord.</li>
             </ul>
           </div>
 

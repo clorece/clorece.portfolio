@@ -62,27 +62,42 @@ async def get_optional_user(request: Request):
     except:
         return None
 
+async def background_initialization():
+    """Handles heavy loading in the background to avoid blocking Hugging Face startup."""
+    print("[INIT] Background initialization started...")
+    try:
+        # 1. Initialize DB Pool
+        database.init_pool()
+        # 2. Initial cache populate (this will happen once pool is ready)
+        database.refresh_leaderboard_cache(force=True)
+    except Exception as e:
+        print(f"[ERROR] DB background init error: {e}")
+        
+    try:
+        # 3. Pre-load ML model
+        print("[ML] Pre-loading ML model in background...")
+        ml_assistant.get_model()
+        print("[SUCCESS] ML model loaded in background.")
+    except Exception as e:
+        print(f"[ERROR] Model background init error: {e}")
+
 @app.on_event("startup")
 async def startup_event():
-    # Initialize database pool
-    database.init_pool()
-    # Load ML model on start
-    print("Pre-loading ML model...")
-    ml_assistant.get_model()
-    # Start the Discord bot as a background task
-    print("Launching Discord bot...")
+    # Trigger all long-running tasks in the background
+    # This allows FastAPI to start listening on port 7860 immediately
+    asyncio.create_task(background_initialization())
     asyncio.create_task(start_bot())
-    # Start the Database Keep-Alive task
     asyncio.create_task(db_heartbeat())
+    print("[API LIVE] Port opened. App is live while resources load in background.")
 
 async def db_heartbeat():
     """Refreshes the leaderboard cache every 6 hours to provide a 'meaningful' use of the database connection (Keep-Alive)."""
     while True:
         try:
             database.refresh_leaderboard_cache(force=True)
-            print("💓 Database heartbeat/cache refresh successful.")
+            print("[HEARTBEAT] Database heartbeat/cache refresh successful.")
         except Exception as e:
-            print(f"💔 Heartbeat failed: {e}")
+            print(f"[HEARTBEAT FAILED] Heartbeat failed: {e}")
         await asyncio.sleep(21600) # Wait 6 hours (6 * 3600)
 
 @app.get("/api/auth/login")
@@ -202,7 +217,7 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
                     total, streak = database.fail_daily(user_id, username, avatar)
                     result.update({"total": total, "streak": streak})
         except Exception as e:
-            print(f"❌ Database error during grading: {e}")
+            print(f"[ERROR] Database error during grading: {e}")
             result.update({"error": "Database error: Points/streak could not be updated."})
 
     return result

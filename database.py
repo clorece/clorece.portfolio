@@ -12,7 +12,7 @@ connection_pool = None
 
 def init_db():
     if not connection_pool: 
-        print("⚠️ No connection pool available to initialize database.")
+        print("[WARNING] No connection pool available to initialize database.")
         return
     conn = None
     try:
@@ -36,26 +36,26 @@ def init_db():
                 c.execute("ALTER TABLE users ENABLE ROW LEVEL SECURITY")
                 # Note: 'postgres' role (used by DATABASE_URL) bypasses RLS by default.
             except Exception as e:
-                print(f"ℹ️ Note on RLS: {e}")
+                print(f"[INFO] Note on RLS: {e}")
                 
             conn.commit()
-            print("✅ Database tables initialized and RLS enabled.")
+            print("[SUCCESS] Database tables initialized and RLS enabled.")
     except Exception as e:
-        print(f"❌ Error initializing database tables: {e}")
+        print(f"[ERROR] Error initializing database tables: {e}")
     finally:
         if conn: connection_pool.putconn(conn)
 
 def init_pool():
     global connection_pool
     if not DATABASE_URL: 
-        print("❌ DATABASE_URL environment variable is MISSING!")
+        print("[ERROR] DATABASE_URL environment variable is MISSING!")
         return
     try:
         connection_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
-        print("🌐 Database connection pool initialized.")
+        print("[CONNECTION] Database connection pool initialized.")
         init_db()
     except Exception as e:
-        print(f"❌ Failed to initialize connection pool: {e}")
+        print(f"[ERROR] Failed to initialize connection pool: {e}")
         connection_pool = None
 
 def update_user_metadata(user_id: str, username: str, avatar: str):
@@ -123,9 +123,9 @@ def refresh_leaderboard_cache(limit: int = 10, force: bool = False):
         if data:
             _leaderboard_cache = data
             _last_refresh_time = now
-            print(f"📊 Leaderboard cache refreshed ({len(data)} users).")
+            print(f"[CACHE] Leaderboard cache refreshed ({len(data)} users).")
     except Exception as e:
-        print(f"❌ Failed to refresh leaderboard cache: {e}")
+        print(f"[ERROR] Failed to refresh leaderboard cache: {e}")
 
 def get_leaderboard_cached():
     """Returns the pre-fetched leaderboard and the last refresh timestamp."""

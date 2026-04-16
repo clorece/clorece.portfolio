@@ -17,6 +17,30 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Track active sessions to prevent users from starting multiple practice/daily sessions
 active_sessions = set()
 
+class ChallengeView(discord.ui.View):
+    def __init__(self, user_id):
+        super().__init__(timeout=60.0)
+        self.user_id = user_id
+        self.choice = None
+
+    @discord.ui.button(label="Word Challenge", style=discord.ButtonStyle.primary)
+    async def word_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This choice is not for you!", ephemeral=True)
+            return
+        self.choice = "Word"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(label="Sentence Challenge", style=discord.ButtonStyle.secondary)
+    async def sentence_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("This choice is not for you!", ephemeral=True)
+            return
+        self.choice = "Sentence"
+        await interaction.response.defer()
+        self.stop()
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name}")
@@ -73,12 +97,12 @@ async def rank_cmd(interaction: discord.Interaction):
         await interaction.response.send_message("Nobody has any points yet! Be the first by using `/daily`.")
         return
         
-    embed = discord.Embed(title="🔥 Global Leaderboard 🔥", color=discord.Color.orange())
+    embed = discord.Embed(title="[RANKINGS] Global Leaderboard", color=discord.Color.orange())
     
     desc = ""
     for idx, entry in enumerate(leaderboard, 1):
         user_id_str, points, streak, username, avatar = entry
-        desc += f"**{idx}.** <@{user_id_str}> - **{points} Points** (🔥 x{streak} multiplier)\n"
+        desc += f"**{idx}.** <@{user_id_str}> - **{points} Points** (Multiplier: x{streak})\n"
         
     embed.description = desc
     await interaction.response.send_message(embed=embed)
@@ -100,32 +124,27 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
     active_sessions.add(user_id)
     
     try:
-        # Pre-Challenge Reaction Phase
+        # Pre-Challenge Choice Phase
+        view = ChallengeView(user_id)
         if is_daily:
             _, mult, last_date = database.get_user(str(user_id))
             active_mult = database.evaluate_multiplier(mult, last_date)
             w_pts = 15 * active_mult
             s_pts = 30 * active_mult
-            desc = f"**Current Streak Multiplier: 🔥 x{active_mult}**\n\n🇼 **Word Challenge:** {w_pts} Points\n🇸 **Sentence Challenge:** {s_pts} Points\n\n*React below to choose your difficulty!*"
+            desc = f"**Current Streak Multiplier: x{active_mult}**\n\n**Word Challenge:** {w_pts} Points\n**Sentence Challenge:** {s_pts} Points\n\n*Select your difficulty using the buttons below!*"
         else:
-            desc = "🇼 **Word Challenge**\n🇸 **Sentence Challenge**\n\n*React below to choose your difficulty!*"
+            desc = "**Word Challenge**\n**Sentence Challenge**\n\n*Select your difficulty using the buttons below!*"
             
         embed_prompt = discord.Embed(title="Choose Challenge", description=desc, color=discord.Color.blue())
-        prompt_msg = await interaction.followup.send(embed=embed_prompt, wait=True)
+        prompt_msg = await interaction.followup.send(embed=embed_prompt, view=view, wait=True)
         
-        await prompt_msg.add_reaction("🇼")
-        await prompt_msg.add_reaction("🇸")
+        timed_out = await view.wait() # Returns True if it timed out
         
-        def react_check(reaction, r_user):
-            return r_user.id == user_id and reaction.message.id == prompt_msg.id and str(reaction.emoji) in ["🇼", "🇸"]
-            
-        try:
-            reaction, _ = await bot.wait_for('reaction_add', timeout=60.0, check=react_check)
-        except asyncio.TimeoutError:
+        if timed_out or not view.choice:
             await interaction.followup.send(f"{interaction.user.mention} You ran out of time to choose! Challenge cancelled.")
             return
             
-        category = "Word" if str(reaction.emoji) == "🇼" else "Sentence"
+        category = view.choice
     
         # Generate Challenge
         english_word, translated_word = ml_assistant.generate_challenge(language, word, category)
@@ -166,18 +185,18 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
             if is_daily:
                 base_points = 15 if category == "Word" else 30
                 earned, total, streak = database.reward_daily(str(user_id), base_points)
-                res_desc = f"**Passed!** 🎉\nAccuracy Score: **{score:.2f}**\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n🔥 **You earned {earned} Points!** (x{streak} streak multiplier)\n**Total Score: {total}**"
+                res_desc = f"**Passed! (Success)**\nAccuracy Score: **{score:.2f}**\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n**You earned {earned} Points!** (x{streak} streak multiplier)\n**Total Score: {total}**"
                 color = discord.Color.green()
             else:
-                res_desc = f"**Passed!** 🎉\nAccuracy Score: **{score:.2f}**\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n*(This was practice, so points weren't affected.)*"
+                res_desc = f"**Passed! (Success)**\nAccuracy Score: **{score:.2f}**\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n*(This was practice, so points weren't affected.)*"
                 color = discord.Color.green()
         else:
             if is_daily:
                 total, streak = database.fail_daily(str(user_id))
-                res_desc = f"**Incorrect.** 😔\nAccuracy Score: **{score:.2f}** (Failed)\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\nYour multiplier streak was reset to x1. Current Total: {total}."
+                res_desc = f"**Incorrect. (Failed)**\nAccuracy Score: **{score:.2f}** (Failed)\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\nYour multiplier streak was reset to x1. Current Total: {total}."
                 color = discord.Color.red()
             else:
-                res_desc = f"**Incorrect.** 😔\nAccuracy Score: **{score:.2f}** (Failed)\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**."
+                res_desc = f"**Incorrect. (Failed)**\nAccuracy Score: **{score:.2f}** (Failed)\n*Reasoning: {reason}*\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**."
                 color = discord.Color.red()
                 
         result_embed = discord.Embed(description=res_desc, color=color)
