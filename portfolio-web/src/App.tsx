@@ -698,23 +698,11 @@ const LangyPage = () => {
 
 const Footer = () => {
   return (
-    <footer id="global-footer" className="relative z-50 mt-auto py-12 px-6 border-t border-slate-800 bg-slate-900/95 backdrop-blur-2xl">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-        <div className="flex flex-col items-center md:items-start gap-2">
-          <p className="text-xs text-slate-200 font-black uppercase tracking-widest">
-            Clorece Portfolio | Langy Project
-          </p>
-          <p className="text-[10px] text-slate-600 font-bold tracking-[0.2em]">
-            MADE WITH INTENT • {new Date().getFullYear()}
-          </p>
-        </div>
-        <div className="flex gap-10">
-          <a href="#" className="text-slate-500 hover:text-indigo-400 transition-all text-xs uppercase tracking-widest font-black">Support</a>
-          <a href="#" className="text-slate-500 hover:text-indigo-400 transition-all text-xs uppercase tracking-widest font-black">Privacy</a>
-          <a href="https://github.com" className="text-slate-500 hover:text-indigo-400 transition-all text-xs uppercase tracking-widest font-black flex items-center gap-2">
-            <Github size={14} /> Open Source
-          </a>
-        </div>
+    <footer id="global-footer" className="relative z-50 mt-auto py-8 px-6 border-t border-slate-800 bg-slate-900/95 backdrop-blur-2xl">
+      <div className="max-w-6xl mx-auto flex justify-center">
+        <p className="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase">
+          © {new Date().getFullYear()} Clorece Portfolio
+        </p>
       </div>
     </footer>
   );
