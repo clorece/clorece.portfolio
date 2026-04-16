@@ -33,8 +33,8 @@ jobs:
           cd portfolio-web
           npm run build
         env:
-          # Your new Render API URL
-          VITE_API_URL: "https://clorece-portfolio.onrender.com/api"
+          # Your new Hugging Face API URL
+          VITE_API_URL: "https://clorece-langy-portfolio.hf.space/api"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
