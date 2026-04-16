@@ -7,6 +7,18 @@ const API_BASE = import.meta.env.VITE_API_URL || "/api"
 
 // --- Components ---
 
+const renderMarkdown = (text: string) => {
+  if (!text) return null;
+  // Simple regex to replace **text** with bold elements
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-bold text-slate-200">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+};
+
 const Navbar = () => (
   <nav className="fixed top-0 w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
     <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -517,9 +529,9 @@ const LangyPage = () => {
                       <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
                         You said: <span className={result.is_correct ? "text-emerald-500/70" : "text-red-400/70"}>{answer}</span>
                       </p>
-                      <p className="text-slate-400 italic text-sm leading-relaxed">
-                        "{result.reason}"
-                      </p>
+                      <div className="text-slate-400 italic text-sm leading-relaxed">
+                        "{renderMarkdown(result.reason)}"
+                      </div>
                     </div>
                     {result.earned && (
                       <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl mb-8">
