@@ -10,20 +10,22 @@
   --text-secondary: #5c5f77;
   --accent-primary: #1e66f5; /* Sapphire */
   --accent-secondary: #40a02b; /* Green */
-  --node-color: rgba(76, 79, 105, 0.15);
-  --line-color: rgba(76, 79, 105, 0.08);
+  --border-color: #ccd0da;
+  --node-color: rgba(76, 79, 105, 0.4);
+  --line-color: rgba(76, 79, 105, 0.2);
 }
 
-/* Catppuccin Mocha (Dark) */
+/* Catppuccin Macchiato (Dark) */
 .dark {
-  --bg-primary: #1e1e2e;
-  --bg-secondary: #181825;
-  --text-primary: #cdd6f4;
-  --text-secondary: #bac2de;
-  --accent-primary: #89b4fa; /* Blue */
-  --accent-secondary: #a6e3a1; /* Green */
-  --node-color: rgba(205, 214, 244, 0.15);
-  --line-color: rgba(205, 214, 244, 0.08);
+  --bg-primary: #24273a;
+  --bg-secondary: #1e2030;
+  --text-primary: #cad3f5;
+  --text-secondary: #a5adcb;
+  --accent-primary: #8aadf4; /* Blue */
+  --accent-secondary: #a6da95; /* Green */
+  --border-color: #363a4f;
+  --node-color: rgba(202, 211, 245, 0.4);
+  --line-color: rgba(202, 211, 245, 0.2);
 }
 
 body {

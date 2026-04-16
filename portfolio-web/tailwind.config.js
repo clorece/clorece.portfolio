@@ -18,6 +18,7 @@ export default {
           'text-soft': 'var(--text-secondary)',
           accent: 'var(--accent-primary)',
           'accent-soft': 'var(--accent-secondary)',
+          border: 'var(--border-color)',
         }
       }
     },

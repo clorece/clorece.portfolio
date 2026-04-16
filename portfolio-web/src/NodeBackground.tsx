@@ -11,21 +11,23 @@ interface Node {
 
 const NodeBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: 0, y: 0 });
+  const mouseRef = useRef({ x: -1000, y: -1000 }); // Start far away
   const nodesRef = useRef<Node[]>([]);
   const requestRef = useRef<number>();
 
+  const RADIUS = 250; // Visibility radius around mouse
+
   const initNodes = (width: number, height: number) => {
     const nodes: Node[] = [];
-    const count = Math.min(Math.floor((width * height) / 15000), 100);
+    const count = 150; // Fixed count for consistent density
     for (let i = 0; i < count; i++) {
       nodes.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        z: Math.random() * 2 + 1, // Depth factor
-        size: Math.random() * 2 + 1,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        z: Math.random() * 2 + 1,
+        size: Math.random() * 1.5 + 1,
       });
     }
     nodesRef.current = nodes;
@@ -36,58 +38,87 @@ const NodeBackground: React.FC = () => {
     context.clearRect(0, 0, width, height);
 
     // Get colors from CSS variables
-    const nodeColor = getComputedStyle(document.documentElement).getPropertyValue('--node-color').trim();
-    const lineColor = getComputedStyle(document.documentElement).getPropertyValue('--line-color').trim();
+    const nodeColorRaw = getComputedStyle(document.documentElement).getPropertyValue('--node-color').trim();
+    const lineColorRaw = getComputedStyle(document.documentElement).getPropertyValue('--line-color').trim();
 
     const nodes = nodesRef.current;
     const mouse = mouseRef.current;
 
-    context.fillStyle = nodeColor;
-    context.strokeStyle = lineColor;
-    context.lineWidth = 1;
-
     for (let i = 0; i < nodes.length; i++) {
       const n = nodes[i];
       
-      // Update position with drift and parallax
-      // We don't modify n.x/n.y directly with mouse to keep the drift stable
-      const parallaxX = (mouse.x - width / 2) * (n.z * 0.02);
-      const parallaxY = (mouse.y - height / 2) * (n.z * 0.02);
+      // Calculate parallax based on mouse
+      const parallaxX = (mouse.x - width / 2) * (n.z * 0.015);
+      const parallaxY = (mouse.y - height / 2) * (n.z * 0.015);
 
       const renderX = (n.x + parallaxX + width) % width;
       const renderY = (n.y + parallaxY + height) % height;
 
-      // Update base coordinates for drift
-      n.x += n.vx;
-      n.y += n.vy;
+      // Distance to mouse for radius effect
+      const dxMouse = renderX - mouse.x;
+      const dyMouse = renderY - mouse.y;
+      const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
 
-      // Draw node
-      context.beginPath();
-      context.arc(renderX, renderY, n.size, 0, Math.PI * 2);
-      context.fill();
+      // Visibility factor based on radius
+      let visibility = 0;
+      if (distMouse < RADIUS) {
+        visibility = 1 - (distMouse / RADIUS);
+      }
 
-      // Draw lines (trees)
-      for (let j = i + 1; j < nodes.length; j++) {
-        const m = nodes[j];
-        const mParallaxX = (mouse.x - width / 2) * (m.z * 0.02);
-        const mParallaxY = (mouse.y - height / 2) * (m.z * 0.02);
-        const mRenderX = (m.x + mParallaxX + width) % width;
-        const mRenderY = (m.y + mParallaxY + height) % height;
+      if (visibility > 0) {
+        // Update base coordinates for drift
+        n.x += n.vx;
+        n.y += n.vy;
 
-        const dx = renderX - mRenderX;
-        const dy = renderY - mRenderY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // Draw node with fading
+        context.globalAlpha = visibility;
+        context.fillStyle = nodeColorRaw;
+        context.beginPath();
+        context.arc(renderX, renderY, n.size, 0, Math.PI * 2);
+        context.fill();
 
-        if (distance < 150) {
-          context.globalAlpha = 1 - distance / 150;
-          context.beginPath();
-          context.moveTo(renderX, renderY);
-          context.lineTo(mRenderX, mRenderY);
-          context.stroke();
-          context.globalAlpha = 1.0;
+        // Draw lines (trees) to nearby visible nodes
+        for (let j = i + 1; j < nodes.length; j++) {
+          const m = nodes[j];
+          const mParallaxX = (mouse.x - width / 2) * (m.z * 0.015);
+          const mParallaxY = (mouse.y - height / 2) * (m.z * 0.015);
+          const mRenderX = (m.x + mParallaxX + width) % width;
+          const mRenderY = (m.y + mParallaxY + height) % height;
+
+          const dx = renderX - mRenderX;
+          const dy = renderY - mRenderY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // Only draw connection if both nodes are somewhat near mouse and each other
+          if (distance < 120) {
+            const mDxMouse = mRenderX - mouse.x;
+            const mDyMouse = mRenderY - mouse.y;
+            const mDistMouse = Math.sqrt(mDxMouse * mDxMouse + mDyMouse * mDyMouse);
+            
+            let mVisibility = 0;
+            if (mDistMouse < RADIUS) {
+              mVisibility = 1 - (mDistMouse / RADIUS);
+            }
+
+            const combinedVisibility = Math.min(visibility, mVisibility) * (1 - distance / 120);
+            
+            if (combinedVisibility > 0) {
+              context.globalAlpha = combinedVisibility;
+              context.strokeStyle = lineColorRaw;
+              context.beginPath();
+              context.moveTo(renderX, renderY);
+              context.lineTo(mRenderX, mRenderY);
+              context.stroke();
+            }
+          }
         }
+      } else {
+         // Still update drift even if invisible
+         n.x += n.vx;
+         n.y += n.vy;
       }
     }
+    context.globalAlpha = 1.0;
 
     requestRef.current = requestAnimationFrame(() => draw(ctx, context));
   };
@@ -124,7 +155,7 @@ const NodeBackground: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 -z-10 pointer-events-none opacity-60"
+      className="fixed inset-0 z-0 pointer-events-none"
     />
   );
 };
