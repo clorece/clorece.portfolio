@@ -3,7 +3,7 @@ import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'reac
 import { motion, AnimatePresence } from 'framer-motion'
 import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw, Bot, ExternalLink } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:10000/api"
+const API_BASE = "/api"
 
 // --- Components ---
 
@@ -58,7 +58,7 @@ const ProjectCard = ({ title, description, tags, link }: any) => (
         </span>
       ))}
     </div>
-    <Link to={link} className="text-blue-400 font-semibold hover:underline">View Project -> </Link>
+    <Link to={link} className="text-blue-400 font-semibold hover:underline">View Project &rarr; </Link>
   </div>
 )
 
