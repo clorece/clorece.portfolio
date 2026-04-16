@@ -1,23 +1,17 @@
-import os
-from deep_translator import GoogleTranslator
-from random_word import RandomWords
-from sentence_transformers.util import cos_sim
-
-# Lazy load model so bot startup isn't blocked completely
-_model = None
-
-def get_model():
-    global _model
-    if _model is None:
-        from sentence_transformers import SentenceTransformer
-        # all-MiniLM-L6-v2 is small and very fast for semantic similarity
-        _model = SentenceTransformer('all-MiniLM-L6-v2')
-    return _model
-
 import random
 import os
+import difflib
+import nltk
+from deep_translator import GoogleTranslator
+from random_word import RandomWords
 
-# Fallback datasets in case the .txt files are missing
+# Accuracy Engine Imports
+import accuracy
+
+# Lazy load model logic moved to accuracy.semantic, but we keep the helper if needed internally
+# Or better, just rely on accuracy.get_model()
+
+# Fallback datasets
 COMMON_WORDS = [
     "apple", "water", "house", "flower", "bread", "coffee", "morning", "evening",
     "goodbye", "please", "thank you", "country", "world", "month", "school", "money",
@@ -37,58 +31,39 @@ COMMON_SENTENCES = [
 def load_local_datasets():
     global COMMON_WORDS
     global COMMON_SENTENCES
-    
     if os.path.exists("common_words.txt"):
         with open("common_words.txt", "r", encoding="utf-8") as f:
-            # Enforce minimum 5 characters to avoid "the", "it", "is", etc.
             words = [w.strip() for w in f.read().splitlines() if len(w.strip()) >= 5]
-            if words:
-                COMMON_WORDS = words
-                
+            if words: COMMON_WORDS = words
     if os.path.exists("common_sentences.txt"):
         with open("common_sentences.txt", "r", encoding="utf-8") as f:
             sentences = [s.strip() for s in f.read().splitlines() if len(s.strip()) > 5]
-            if sentences:
-                COMMON_SENTENCES = sentences
+            if sentences: COMMON_SENTENCES = sentences
 
-# Automatically load the text files upon starting the bot
 load_local_datasets()
-
-# Initialize RandomWords for nearly infinite word variety
 _rw = RandomWords()
 
 def get_random_english_word(category: str = "Word") -> str:
     if category.lower() == "sentence":
         return random.choice(COMMON_SENTENCES)
-    
-    # Attempt to get a truly random word using the library
     try:
-        # Get a word between 5-10 characters for good difficulty
         word = _rw.get_random_word(minLength=5, maxLength=10)
         if word: return word
     except:
         pass
-        
     return random.choice(COMMON_WORDS)
 
 def is_language_supported(lang: str) -> bool:
     try:
-        from deep_translator import GoogleTranslator
         supported = GoogleTranslator().get_supported_languages()
         return lang.lower() in supported
     except:
         return True
 
 def generate_challenge(language: str, word: str = None, category: str = "Word") -> tuple[str, str]:
-    """
-    Returns (english_word, translated_word).
-    If word is provided, uses it. Otherwise gets random English phrase based on category.
-    """
     if not is_language_supported(language):
         return "error", f"'{language}' is not in the supported language list. Try `/language`."
-        
     english_word = word if word else get_random_english_word(category)
-    
     try:
         translator = GoogleTranslator(source='english', target=language.lower())
         translated = translator.translate(english_word)
@@ -96,31 +71,19 @@ def generate_challenge(language: str, word: str = None, category: str = "Word") 
     except Exception as e:
         return "error", str(e)
 
-def formatPrompt_NativeToEng(language: str, native_word: str) -> str:
-    return f"Translate exactly this word from **{language.capitalize()}** to **English**:\n\n**{native_word}**"
+# Modular Translation Wrapper
+def translate_text(text: str, source: str = 'auto', target: str = 'english') -> str:
+    try:
+        translator = GoogleTranslator(source=source, target=target)
+        return translator.translate(text).lower()
+    except Exception:
+        return text.lower()
 
-def formatPrompt_EngToNative(language: str, eng_word: str) -> str:
-    return f"Translate exactly this word from **English** to **{language.capitalize()}**:\n\n**{eng_word}**"
-
-import difflib
-import nltk
-
-# Auto-download WordNet dictionary on first startup
-try:
-    nltk.data.find('corpora/wordnet')
-except LookupError:
-    print("Downloading NLTK dictionary for the first time...")
-    nltk.download('wordnet')
-    nltk.download('omw-1.4')
-
-def get_score_reason(original: str, user_input: str, score: float) -> str:
+def get_score_reason(original: str, user_input: str, semantic_score: float, lexical_score: float, wordnet_sim: float, wordnet_desc: str) -> str:
     original = original.lower()
     user_input = user_input.lower()
     
-    if score >= 0.95:
-        return "Perfect semantic match!"
-        
-    # Check for basic plural/singular and common tense variations
+    # 1. Basic Grammatical Checks (Singular/Plural)
     if original == user_input + 's' or user_input == original + 's' or \
        original == user_input + 'es' or user_input == original + 'es' or \
        (original == "child" and user_input == "children") or \
@@ -129,66 +92,75 @@ def get_score_reason(original: str, user_input: str, score: float) -> str:
        (original == "men" and user_input == "man") or \
        (original == "woman" and user_input == "women") or \
        (original == "women" and user_input == "woman"):
-        return "You answered in a different grammatical form (like singular/plural)."
-        
-    char_similarity = difflib.SequenceMatcher(None, original, user_input).ratio()
-    if char_similarity >= 0.75:
-        return "Likely a minor typo or spelling variation."
-        
-    if score >= 0.70:
+        return "Correct concept! You just used a different grammatical form (singular/plural)."
+
+    # 2. Check for High Confidence Matches
+    if semantic_score >= 0.96 and lexical_score >= 0.90:
+        return "Spot on! Perfect semantic and near-perfect spelling match."
+    if wordnet_sim >= 1.0:
+        return wordnet_desc
+
+    # 3. Handle Intermediate Scores (The .79 and .56 cases)
+    if wordnet_desc and wordnet_sim >= 0.60:
+        return wordnet_desc
+    if lexical_score >= 0.85:
+        return f"Very close! Likely a minor typo: **'{user_input}'** vs **'{original}'**."
+    if semantic_score >= 0.75:
         return "Close enough! The words share highly similar semantic meaning."
-        
-    # Provide Offline Dictionary Feedback for Failures!
+
+    # 4. Dictionary Fallback for Failures
     try:
         from nltk.corpus import wordnet
         orig_syn = wordnet.synsets(original)
         user_syn = wordnet.synsets(user_input)
-        
         if orig_syn and user_syn:
             orig_def = orig_syn[0].definition()
             user_def = user_syn[0].definition()
-            
-            # Keep definitions short to avoid giant blocks of text
             orig_def = (orig_def[:75] + '..') if len(orig_def) > 75 else orig_def
             user_def = (user_def[:75] + '..') if len(user_def) > 75 else user_def
-            
-            if score >= 0.45:
+            if semantic_score >= 0.50:
                 return f"Almost! But **'{user_input}'** means *'{user_def}'*, while **'{original}'** means *'{orig_def}'*."
-            else:
-                return f"Fundamentally different. **'{user_input}'** means *'{user_def}'*, while **'{original}'** means *'{orig_def}'*."
-    except Exception:
+    except:
         pass
-        
-    if score >= 0.45:
+
+    if semantic_score >= 0.50:
         return "The words are related in context, but aren't synonymous or accurate enough."
-        
     return "The words have fundamentally different semantic meanings."
 
 def process_user_input_and_grade(language: str, original_english: str, user_input: str) -> tuple[bool, float, str]:
     """
-    Takes the user's raw input (which may be in English, Native characters, or Romaji).
-    Translates it to English if it's not already, and does semantic cosine similarity.
-    Returns (is_correct, similarity_score, reason).
+    Takes raw user input, translates it, and grades it using the modular accuracy engine.
     """
-    # 1. First, forcefully translate the user's input into English, 
-    # relying on Google Translate to handle Romaji / native characters automatically.
-    try:
-        translator = GoogleTranslator(source='auto', target='english')
-        user_english_guess = translator.translate(user_input).lower()
-    except:
-        user_english_guess = user_input.lower()
+    # 1. Translate
+    user_english_guess = translate_text(user_input)
         
-    # 2. Get the embeddings for both the true English word and the user's translated guess
-    model = get_model()
-    embeddings = model.encode([original_english.lower(), user_english_guess])
+    # 2. Semantic Score
+    semantic_score = accuracy.get_semantic_score(original_english, user_english_guess)
     
-    # 3. Calculate Cosine Similarity
-    score = float(cos_sim(embeddings[0], embeddings[1])[0][0])
+    # 3. Lexical Score
+    lexical_score = accuracy.get_lexical_score(original_english, user_english_guess)
     
-    # 4. Grade it (threshold 0.70 allows plurals like child/children but blocks girl/woman)
-    is_correct = score >= 0.70
+    # 4. WordNet Relationship
+    wordnet_sim, wordnet_desc = accuracy.get_wordnet_relationship(original_english, user_english_guess)
     
-    # 5. Provide heuristic logic
-    reason = get_score_reason(original_english, user_english_guess, score)
+    # 5. Hybrid Final Score
+    if wordnet_sim >= 1.0 or lexical_score >= 1.0:
+        final_score = 1.0
+    else:
+        # Weighted Average: Semantic (60%), Lexical (20%), WordNet (20%)
+        if semantic_score < 0.35:
+            final_score = semantic_score
+        else:
+            final_score = (semantic_score * 0.6) + (lexical_score * 0.2) + (wordnet_sim * 0.2)
+            
+    final_score = max(0.0, min(1.0, final_score))
+    is_correct = final_score >= 0.75
     
-    return is_correct, round(score, 3), reason
+    # 6. Generate detailed reasoning
+    reason = get_score_reason(original_english, user_english_guess, semantic_score, lexical_score, wordnet_sim, wordnet_desc)
+    
+    return is_correct, round(final_score, 3), reason
+
+# For backwards compatibility with startup scripts that might call get_model()
+def get_model():
+    return accuracy.get_model()

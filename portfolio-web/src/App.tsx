@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search } from 'lucide-react'
+import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff } from 'lucide-react'
 
 // --- Components ---
 
@@ -281,7 +281,35 @@ const LangyPage = () => {
 
       <div className="grid lg:grid-cols-3 gap-12">
         {/* Main Content Area */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-8">
+          {/* How to Play Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-800/30 border border-slate-800 rounded-3xl p-6"
+          >
+            <h4 className="text-sm font-bold mb-6 flex items-center gap-2 text-slate-400 uppercase tracking-widest">
+              <AlertCircle size={16} className="text-blue-400" /> How to Play
+            </h4>
+            <div className="grid sm:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-400 mb-3 border border-blue-500/20">1</div>
+                <h5 className="font-bold text-sm">Pick a Language</h5>
+                <p className="text-xs text-slate-500 leading-relaxed">Choose from 100+ languages and select your difficulty (Word or Sentence).</p>
+              </div>
+              <div className="space-y-2">
+                <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-400 mb-3 border border-emerald-500/20">2</div>
+                <h5 className="font-bold text-sm">Translate</h5>
+                <p className="text-xs text-slate-500 leading-relaxed">Translate the prompt. Our AI grades you on meaning, not just spelling!</p>
+              </div>
+              <div className="space-y-2">
+                <div className="w-8 h-8 bg-orange-500/10 rounded-lg flex items-center justify-center text-orange-400 mb-3 border border-orange-500/20">3</div>
+                <h5 className="font-bold text-sm">Earn Points</h5>
+                <p className="text-xs text-slate-500 leading-relaxed">Maintain your daily streak to multiply your rewards and climb the leaderboard.</p>
+              </div>
+            </div>
+          </motion.div>
+
           {!challenge ? (
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -506,6 +534,94 @@ const LangyPage = () => {
           </div>
         </div>
       </div>
+
+      {/* About Me / Project Section */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="mt-20 pt-12 border-t border-slate-800 grid md:grid-cols-2 gap-12"
+      >
+        <div>
+          <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">About the Project</h4>
+          <p className="text-slate-400 leading-relaxed mb-6">
+            Langy is a demonstration of modern Natural Language Processing (NLP) in an interactive setting. 
+            By using semantic embeddings and hierarchical linguistic analysis, Langy understands the <em>meaning</em> 
+            behind your translations rather than just checking for exact character matches.
+          </p>
+          <div className="flex gap-4">
+            <span className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-bold text-blue-400 uppercase">Sentence Transformers</span>
+            <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase">React/Framer Motion</span>
+            <span className="px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-bold text-purple-400 uppercase">FastAPI</span>
+          </div>
+        </div>
+        <div>
+          <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">About Me</h4>
+          <p className="text-slate-400 leading-relaxed mb-6">
+            I'm a developer passionate about building interactive, AI-driven experiences. Langy was built 
+            to showcase how modern technology can make language learning more intuitive. 
+            Feel free to check out my other projects or connect on GitHub!
+          </p>
+          <a href="https://github.com" className="inline-flex items-center gap-2 text-blue-400 font-bold hover:text-blue-300 transition-colors">
+            <Github size={20} /> View more work
+          </a>
+        </div>
+      </motion.div>
+
+      {/* Security & Privacy Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="mt-12 bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <ShieldCheck size={120} />
+        </div>
+        
+        <h4 className="text-sm font-bold mb-8 flex items-center gap-2 text-slate-400 uppercase tracking-widest">
+          <Lock size={16} className="text-emerald-400" /> Privacy & Data Security
+        </h4>
+
+        <div className="grid md:grid-cols-3 gap-8 relative z-10">
+          <div className="space-y-4">
+            <h5 className="font-bold flex items-center gap-2 text-slate-200">
+              <ShieldCheck size={18} className="text-blue-400" /> What we store
+            </h5>
+            <ul className="text-xs text-slate-500 space-y-2 leading-relaxed">
+              <li>• <strong>Discord ID:</strong> To link your points to your account.</li>
+              <li>• <strong>Username & Avatar:</strong> To display on the global leaderboard.</li>
+              <li>• <strong>Game Stats:</strong> Your points, streaks, and timestamps.</li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h5 className="font-bold flex items-center gap-2 text-slate-200">
+              <EyeOff size={18} className="text-red-400" /> What we NEVER access
+            </h5>
+            <ul className="text-xs text-slate-500 space-y-2 leading-relaxed">
+              <li>• Your <strong>Email Address</strong> isn't even requested.</li>
+              <li>• Your <strong>Server List</strong> and private messages.</li>
+              <li>• Any information not marked as 'Public' on Discord.</li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h5 className="font-bold flex items-center gap-2 text-slate-200">
+              <Lock size={18} className="text-emerald-400" /> Security
+            </h5>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Langy uses <strong>JSON Web Tokens (JWT)</strong> for secure session management. 
+              Data is stored in a <strong>Supabase (PostgreSQL)</strong> database protected by 
+              Row Level Security (RLS) to ensure data integrity.
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-8 pt-8 border-t border-slate-800/50 text-[10px] text-slate-500 italic text-center">
+          Discord login uses the <strong>'identify'</strong> scope only. No administrative permissions are requested.
+        </p>
+      </motion.div>
     </div>
   )
 }
