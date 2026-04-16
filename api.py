@@ -51,6 +51,17 @@ async def get_current_user(request: Request):
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+async def get_optional_user(request: Request):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except:
+        return None
+
 @app.on_event("startup")
 async def startup_event():
     # Initialize database pool
@@ -116,7 +127,7 @@ async def callback(code: str):
     access_token = create_access_token({
         "id": user_data["id"],
         "username": user_data["username"],
-        "avatar": user_data["avatar"]
+        "avatar": user_data.get("avatar")
     })
     
     # Redirect back to your GitHub Pages portfolio using HashRouter
@@ -151,14 +162,7 @@ async def get_challenge(language: str, category: str = "Word", word: Optional[st
     }
 
 @app.post("/api/grade")
-async def grade_challenge(data: dict, user = Depends(get_current_user)):
-    user_id = user["id"]
-    username = user.get("username")
-    avatar = user.get("avatar")
-    
-    # Sync metadata every time they play to ensure leaderboard is correct
-    database.update_user_metadata(user_id, username, avatar)
-
+async def grade_challenge(data: dict, user = Depends(get_optional_user)):
     language = data.get("language")
     original_english = data.get("original_english")
     user_input = data.get("user_input")
@@ -175,22 +179,31 @@ async def grade_challenge(data: dict, user = Depends(get_current_user)):
         "expected": original_english
     }
 
-    try:
-        if is_correct:
-            if is_daily:
-                if database.can_do_daily(user_id):
-                    base_points = 15 if category == "Word" else 30
-                    earned, total, streak = database.reward_daily(user_id, base_points, user.get("username"), user.get("avatar"))
-                    result.update({"earned": earned, "total": total, "streak": streak})
-                else:
-                    result.update({"error": "Daily already completed today."})
-        else:
-            if is_daily:
-                total, streak = database.fail_daily(user_id, user.get("username"), user.get("avatar"))
-                result.update({"total": total, "streak": streak})
-    except Exception as e:
-        print(f"❌ Database error during grading: {e}")
-        result.update({"error": "Database error: Points/streak could not be updated."})
+    # Only process database updates if user is authenticated
+    if user:
+        user_id = user["id"]
+        username = user.get("username")
+        avatar = user.get("avatar")
+        
+        # Sync metadata
+        database.update_user_metadata(user_id, username, avatar)
+
+        try:
+            if is_correct:
+                if is_daily:
+                    if database.can_do_daily(user_id):
+                        base_points = 15 if category == "Word" else 30
+                        earned, total, streak = database.reward_daily(user_id, base_points, username, avatar)
+                        result.update({"earned": earned, "total": total, "streak": streak})
+                    else:
+                        result.update({"error": "Daily already completed today."})
+            else:
+                if is_daily:
+                    total, streak = database.fail_daily(user_id, username, avatar)
+                    result.update({"total": total, "streak": streak})
+        except Exception as e:
+            print(f"❌ Database error during grading: {e}")
+            result.update({"error": "Database error: Points/streak could not be updated."})
 
     return result
 

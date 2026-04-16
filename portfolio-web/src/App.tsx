@@ -442,7 +442,7 @@ const LangyPage = () => {
                       autoFocus
                       value={answer}
                       onChange={(e) => setAnswer(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && submitAnswer()}
+                      onKeyDown={(e) => e.key === 'Enter' && answer && submitAnswer()}
                       placeholder={isInverse ? `Type in ${challenge.language}...` : "Type English translation..."}
                       className="flex-1 bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-600"
                     />
