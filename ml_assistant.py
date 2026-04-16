@@ -7,6 +7,7 @@ from random_word import RandomWords
 
 # Accuracy Engine Imports
 import accuracy
+from accuracy.detectors import detect_all_mismatches
 
 # Lazy load model logic moved to accuracy.semantic, but we keep the helper if needed internally
 # Or better, just rely on accuracy.get_model()
@@ -97,18 +98,28 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
     # 2. Check for High Confidence Matches
     if semantic_score >= 0.96 and lexical_score >= 0.90:
         return "Spot on! Perfect semantic and near-perfect spelling match."
+    
     if wordnet_sim >= 1.0:
         return wordnet_desc
 
-    # 3. Handle Intermediate Scores (The .79 and .56 cases)
+    # 3. Usage Gap Detection (High Lexical, Lower Semantic)
+    # This catches cases like "You can say that again" vs "Say that again"
+    if lexical_score >= 0.80 and semantic_score < 0.70:
+        return "You used the right words, but the overall meaning or usage as a phrase is different."
+
+    # 4. Handle Intermediate Scores
     if wordnet_desc and wordnet_sim >= 0.60:
         return wordnet_desc
+        
     if lexical_score >= 0.85:
         return f"Very close! Likely a minor typo: **'{user_input}'** vs **'{original}'**."
+        
     if semantic_score >= 0.75:
+        if lexical_score < 0.60:
+            return "The meaning is there, but the wording is quite different from what we expected."
         return "Close enough! The words share highly similar semantic meaning."
 
-    # 4. Dictionary Fallback for Failures
+    # 5. Dictionary Fallback for Failures
     try:
         from nltk.corpus import wordnet
         orig_syn = wordnet.synsets(original)
@@ -116,15 +127,17 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
         if orig_syn and user_syn:
             orig_def = orig_syn[0].definition()
             user_def = user_syn[0].definition()
-            orig_def = (orig_def[:75] + '..') if len(orig_def) > 75 else orig_def
-            user_def = (user_def[:75] + '..') if len(user_def) > 75 else user_def
-            if semantic_score >= 0.50:
-                return f"Almost! But **'{user_input}'** means *'{user_def}'*, while **'{original}'** means *'{orig_def}'*."
+            # Truncate and clean definitions
+            orig_def = (orig_def[:60] + '..') if len(orig_def) > 60 else orig_def
+            user_def = (user_def[:60] + '..') if len(user_def) > 60 else user_def
+            
+            if semantic_score >= 0.45:
+                return f"Almost! But **'{user_input}'** usually refers to *'{user_def}'*, while **'{original}'** is *'{orig_def}'*."
     except:
         pass
 
     if semantic_score >= 0.50:
-        return "The words are related in context, but aren't synonymous or accurate enough."
+        return "The words are related in context, but the specific intention or phrasing is off."
     return "The words have fundamentally different semantic meanings."
 
 def process_user_input_and_grade(language: str, original_english: str, user_input: str, category: str = "Word") -> tuple[bool, float, str]:
