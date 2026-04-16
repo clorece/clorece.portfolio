@@ -561,16 +561,16 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-catppuccin-bg text-catppuccin-text selection:bg-catppuccin-accent/30">
+      <div className="min-h-screen flex flex-col text-catppuccin-text selection:bg-catppuccin-accent/30 relative">
         <NodeBackground />
-        <div className="flex-grow">
+        <div className="flex-grow flex flex-col relative z-10">
           <Navbar isDark={isDark} toggleTheme={() => setIsDark(!isDark)} />
           <Routes>
             <Route path="/" element={<><Hero /><Projects /></>} />
             <Route path="/langy" element={<LangyPage />} />
           </Routes>
+          <Footer />
         </div>
-        <Footer />
       </div>
     </Router>
   )
