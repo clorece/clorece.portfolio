@@ -146,14 +146,11 @@ def process_user_input_and_grade(language: str, original_english: str, user_inpu
     # 5. Hybrid Final Score with Dynamic Weighting
     if wordnet_sim >= 1.0 or lexical_score >= 1.0:
         final_score = 1.0
-    elif semantic_score >= 0.95:
-        # "Semantic Carry": If meaning is nearly identical, boost it to 0.95+ 
-        # to ensure it's marked corect even with minor typos/missing words.
-        final_score = max(0.95, semantic_score)
     else:
         if category.lower() == "sentence":
-            # For sentences, semantic meaning is king. Lexical is secondary, WordNet is ignored.
-            final_score = (semantic_score * 0.9) + (lexical_score * 0.1)
+            # For sentences, semantic meaning is prioritized but tempered by lexical accuracy.
+            # 70% Semantic / 30% Lexical
+            final_score = (semantic_score * 0.7) + (lexical_score * 0.3)
         else:
             # For words, WordNet and Lexical are more important for identifying synonyms/typos.
             # Weighted Average: Semantic (60%), Lexical (20%), WordNet (20%)
