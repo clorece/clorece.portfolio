@@ -11,8 +11,8 @@
   --accent-primary: #1e66f5; /* Sapphire */
   --accent-secondary: #40a02b; /* Green */
   --border-color: #ccd0da;
-  --node-color: rgba(76, 79, 105, 0.4);
-  --line-color: rgba(76, 79, 105, 0.2);
+  --node-color: rgba(76, 79, 105, 0.6);
+  --line-color: rgba(76, 79, 105, 0.35);
 }
 
 /* Catppuccin Macchiato (Dark) */
@@ -24,8 +24,8 @@
   --accent-primary: #8aadf4; /* Blue */
   --accent-secondary: #a6da95; /* Green */
   --border-color: #363a4f;
-  --node-color: rgba(202, 211, 245, 0.4);
-  --line-color: rgba(202, 211, 245, 0.2);
+  --node-color: rgba(202, 211, 245, 0.6);
+  --line-color: rgba(202, 211, 245, 0.35);
 }
 
 body {

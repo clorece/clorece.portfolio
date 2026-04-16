@@ -15,19 +15,19 @@ const NodeBackground: React.FC = () => {
   const nodesRef = useRef<Node[]>([]);
   const requestRef = useRef<number>();
 
-  const RADIUS = 250; // Visibility radius around mouse
+  const RADIUS = 300; // Increased visibility radius around mouse
 
   const initNodes = (width: number, height: number) => {
     const nodes: Node[] = [];
-    const count = 150; // Fixed count for consistent density
+    const count = 250; // Increased count for higher density
     for (let i = 0; i < count; i++) {
       nodes.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
         z: Math.random() * 2 + 1,
-        size: Math.random() * 1.5 + 1,
+        size: Math.random() * 2.5 + 2, // Thicker dots
       });
     }
     nodesRef.current = nodes;
@@ -48,8 +48,8 @@ const NodeBackground: React.FC = () => {
       const n = nodes[i];
       
       // Calculate parallax based on mouse
-      const parallaxX = (mouse.x - width / 2) * (n.z * 0.015);
-      const parallaxY = (mouse.y - height / 2) * (n.z * 0.015);
+      const parallaxX = (mouse.x - width / 2) * (n.z * 0.012);
+      const parallaxY = (mouse.y - height / 2) * (n.z * 0.012);
 
       const renderX = (n.x + parallaxX + width) % width;
       const renderY = (n.y + parallaxY + height) % height;
@@ -80,8 +80,8 @@ const NodeBackground: React.FC = () => {
         // Draw lines (trees) to nearby visible nodes
         for (let j = i + 1; j < nodes.length; j++) {
           const m = nodes[j];
-          const mParallaxX = (mouse.x - width / 2) * (m.z * 0.015);
-          const mParallaxY = (mouse.y - height / 2) * (m.z * 0.015);
+          const mParallaxX = (mouse.x - width / 2) * (m.z * 0.012);
+          const mParallaxY = (mouse.y - height / 2) * (m.z * 0.012);
           const mRenderX = (m.x + mParallaxX + width) % width;
           const mRenderY = (m.y + mParallaxY + height) % height;
 
@@ -90,7 +90,7 @@ const NodeBackground: React.FC = () => {
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           // Only draw connection if both nodes are somewhat near mouse and each other
-          if (distance < 120) {
+          if (distance < 150) {
             const mDxMouse = mRenderX - mouse.x;
             const mDyMouse = mRenderY - mouse.y;
             const mDistMouse = Math.sqrt(mDxMouse * mDxMouse + mDyMouse * mDyMouse);
@@ -100,11 +100,12 @@ const NodeBackground: React.FC = () => {
               mVisibility = 1 - (mDistMouse / RADIUS);
             }
 
-            const combinedVisibility = Math.min(visibility, mVisibility) * (1 - distance / 120);
+            const combinedVisibility = Math.min(visibility, mVisibility) * (1 - distance / 150);
             
             if (combinedVisibility > 0) {
               context.globalAlpha = combinedVisibility;
               context.strokeStyle = lineColorRaw;
+              context.lineWidth = 2; // Thicker lines
               context.beginPath();
               context.moveTo(renderX, renderY);
               context.lineTo(mRenderX, mRenderY);
