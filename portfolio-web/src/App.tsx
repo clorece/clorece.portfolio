@@ -128,8 +128,8 @@ const LangyPage = () => {
   useEffect(() => {
     if (token) {
       fetchUserStats()
-      fetchLeaderboard()
     }
+    fetchLeaderboard()
   }, [token])
 
   useEffect(() => {
@@ -363,7 +363,7 @@ const LangyPage = () => {
                 {isInverse ? `Translate to ${challenge.language}` : 'Translate to English'}
               </h2>
               <h1 className="text-center text-4xl md:text-5xl font-extrabold mb-12 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                ✨ {isInverse ? challenge.english_word : challenge.translated_word} ✨
+                {isInverse ? challenge.english_word : challenge.translated_word}
               </h1>
 
               <AnimatePresence>

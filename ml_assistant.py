@@ -85,10 +85,10 @@ def generate_challenge(language: str, word: str = None, category: str = "Word") 
         return "error", str(e)
 
 def formatPrompt_NativeToEng(language: str, native_word: str) -> str:
-    return f"Translate exactly this word from **{language.capitalize()}** to **English**:\n\n✨ **{native_word}** ✨"
+    return f"Translate exactly this word from **{language.capitalize()}** to **English**:\n\n**{native_word}**"
 
 def formatPrompt_EngToNative(language: str, eng_word: str) -> str:
-    return f"Translate exactly this word from **English** to **{language.capitalize()}**:\n\n✨ **{eng_word}** ✨"
+    return f"Translate exactly this word from **English** to **{language.capitalize()}**:\n\n**{eng_word}**"
 
 import difflib
 import nltk
