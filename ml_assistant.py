@@ -127,9 +127,9 @@ def get_score_reason(original: str, user_input: str, semantic_score: float, lexi
         return "The words are related in context, but aren't synonymous or accurate enough."
     return "The words have fundamentally different semantic meanings."
 
-def process_user_input_and_grade(language: str, original_english: str, user_input: str) -> tuple[bool, float, str]:
+def process_user_input_and_grade(language: str, original_english: str, user_input: str, category: str = "Word") -> tuple[bool, float, str]:
     """
-    Takes raw user input, translates it, and grades it using the modular accuracy engine.
+    Takes raw user input, translates it, and grades it using the modular accuracy engine with category-aware weighting.
     """
     # 1. Translate
     user_english_guess = translate_text(user_input)
@@ -143,17 +143,28 @@ def process_user_input_and_grade(language: str, original_english: str, user_inpu
     # 4. WordNet Relationship
     wordnet_sim, wordnet_desc = accuracy.get_wordnet_relationship(original_english, user_english_guess)
     
-    # 5. Hybrid Final Score
+    # 5. Hybrid Final Score with Dynamic Weighting
     if wordnet_sim >= 1.0 or lexical_score >= 1.0:
         final_score = 1.0
+    elif semantic_score >= 0.95:
+        # "Semantic Carry": If meaning is nearly identical, boost it to 0.95+ 
+        # to ensure it's marked corect even with minor typos/missing words.
+        final_score = max(0.95, semantic_score)
     else:
-        # Weighted Average: Semantic (60%), Lexical (20%), WordNet (20%)
-        if semantic_score < 0.35:
-            final_score = semantic_score
+        if category.lower() == "sentence":
+            # For sentences, semantic meaning is king. Lexical is secondary, WordNet is ignored.
+            final_score = (semantic_score * 0.9) + (lexical_score * 0.1)
         else:
-            final_score = (semantic_score * 0.6) + (lexical_score * 0.2) + (wordnet_sim * 0.2)
+            # For words, WordNet and Lexical are more important for identifying synonyms/typos.
+            # Weighted Average: Semantic (60%), Lexical (20%), WordNet (20%)
+            if semantic_score < 0.35:
+                final_score = semantic_score
+            else:
+                final_score = (semantic_score * 0.6) + (lexical_score * 0.2) + (wordnet_sim * 0.2)
             
     final_score = max(0.0, min(1.0, final_score))
+    
+    # Passing threshold
     is_correct = final_score >= 0.75
     
     # 6. Generate detailed reasoning

@@ -170,7 +170,7 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
     category = data.get("category", "Word")
     is_inverse = data.get("is_inverse", False)
 
-    is_correct, score, reason = ml_assistant.process_user_input_and_grade(language, original_english, user_input)
+    is_correct, score, reason = ml_assistant.process_user_input_and_grade(language, original_english, user_input, category)
     
     result = {
         "is_correct": is_correct,
