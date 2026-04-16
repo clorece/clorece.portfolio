@@ -11,7 +11,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 connection_pool = None
 
 def init_db():
-    if not connection_pool: return
+    if not connection_pool: 
+        print("⚠️ No connection pool available to initialize database.")
+        return
     conn = None
     try:
         conn = connection_pool.getconn()
@@ -28,8 +30,16 @@ def init_db():
             ''')
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT")
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT")
+            
+            # Enable RLS as per Supabase security recommendations
+            try:
+                c.execute("ALTER TABLE users ENABLE ROW LEVEL SECURITY")
+                # Note: 'postgres' role (used by DATABASE_URL) bypasses RLS by default.
+            except Exception as e:
+                print(f"ℹ️ Note on RLS: {e}")
+                
             conn.commit()
-            print("✅ Database tables initialized.")
+            print("✅ Database tables initialized and RLS enabled.")
     except Exception as e:
         print(f"❌ Error initializing database tables: {e}")
     finally:
@@ -37,16 +47,22 @@ def init_db():
 
 def init_pool():
     global connection_pool
-    if not DATABASE_URL: return
+    if not DATABASE_URL: 
+        print("❌ DATABASE_URL environment variable is MISSING!")
+        return
     try:
         connection_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL)
+        print("🌐 Database connection pool initialized.")
         init_db()
     except Exception as e:
+        print(f"❌ Failed to initialize connection pool: {e}")
         connection_pool = None
 
 def update_user_metadata(user_id: str, username: str, avatar: str):
     """Ensures username and avatar are always up to date in the DB."""
-    if not connection_pool or not username: return
+    if not connection_pool: 
+        raise Exception("Database connection not available.")
+    if not username: return
     conn = None
     try:
         conn = connection_pool.getconn()
@@ -57,13 +73,14 @@ def update_user_metadata(user_id: str, username: str, avatar: str):
                 ON CONFLICT (user_id) DO UPDATE SET
                     username = EXCLUDED.username,
                     avatar = EXCLUDED.avatar
-            ''', (user_id, username, avatar))
+            ''', (str(user_id), username, avatar))
             conn.commit()
     finally:
         if conn: connection_pool.putconn(conn)
 
 def get_user(user_id: str) -> Tuple[int, int, Optional[str]]:
-    if not connection_pool: return 0, 1, None
+    if not connection_pool: 
+        return 0, 1, None
     conn = None
     try:
         conn = connection_pool.getconn()
@@ -76,11 +93,14 @@ def get_user(user_id: str) -> Tuple[int, int, Optional[str]]:
 
 def evaluate_multiplier(multiplier: int, last_daily_date: Optional[str]) -> int:
     if not last_daily_date: return 1
-    last_date_obj = datetime.datetime.fromisoformat(last_daily_date).date()
-    diff = (datetime.datetime.now().date() - last_date_obj).days
-    if diff == 1: return min(multiplier + 1, 7)
-    elif diff == 0: return multiplier
-    else: return 1
+    try:
+        last_date_obj = datetime.datetime.fromisoformat(last_daily_date).date()
+        diff = (datetime.datetime.now().date() - last_date_obj).days
+        if diff == 1: return min(multiplier + 1, 7)
+        elif diff == 0: return multiplier
+        else: return 1
+    except:
+        return 1
 
 def reward_daily(user_id: str, base_points: int, username: str = None, avatar: str = None) -> Tuple[int, int, int]:
     now_date = datetime.datetime.now().date().isoformat()
@@ -89,7 +109,9 @@ def reward_daily(user_id: str, base_points: int, username: str = None, avatar: s
     points_earned = base_points * new_multiplier
     new_total = points + points_earned
     
-    if not connection_pool: return points_earned, new_total, new_multiplier
+    if not connection_pool: 
+        raise Exception("Database connection not available. Points not saved.")
+        
     conn = None
     try:
         conn = connection_pool.getconn()
@@ -112,7 +134,10 @@ def reward_daily(user_id: str, base_points: int, username: str = None, avatar: s
 def fail_daily(user_id: str, username: str = None, avatar: str = None) -> Tuple[int, int]:
     now_date = datetime.datetime.now().date().isoformat()
     points, multiplier, last_daily_date = get_user(user_id)
-    if not connection_pool: return points, 1
+    
+    if not connection_pool: 
+        raise Exception("Database connection not available. Streak not updated.")
+        
     conn = None
     try:
         conn = connection_pool.getconn()

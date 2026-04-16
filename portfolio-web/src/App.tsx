@@ -133,8 +133,8 @@ const LangyPage = () => {
       if (res.ok) {
         const data = await res.json();
         setUser(data);
-        // If multiplier is 1 and points are 0 but user has been active, might be DB issue
-        if (data.points === 0 && !data.can_do_daily) setDbError(true);
+        // Relaxed check: Only error if points are somehow undefined or connection explicitly failed
+        if (data.points === undefined) setDbError(true);
       } else {
         localStorage.removeItem('langy_token')
         setToken(null)

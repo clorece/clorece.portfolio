@@ -76,7 +76,8 @@ async def rank_cmd(interaction: discord.Interaction):
     embed = discord.Embed(title="🔥 Global Leaderboard 🔥", color=discord.Color.orange())
     
     desc = ""
-    for idx, (user_id_str, points, streak) in enumerate(leaderboard, 1):
+    for idx, entry in enumerate(leaderboard, 1):
+        user_id_str, points, streak, username, avatar = entry
         desc += f"**{idx}.** <@{user_id_str}> - **{points} Points** (🔥 x{streak} multiplier)\n"
         
     embed.description = desc

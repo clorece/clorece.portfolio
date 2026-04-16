@@ -175,18 +175,22 @@ async def grade_challenge(data: dict, user = Depends(get_current_user)):
         "expected": original_english
     }
 
-    if is_correct:
-        if is_daily:
-            if database.can_do_daily(user_id):
-                base_points = 15 if category == "Word" else 30
-                earned, total, streak = database.reward_daily(user_id, base_points, user.get("username"), user.get("avatar"))
-                result.update({"earned": earned, "total": total, "streak": streak})
-            else:
-                result.update({"error": "Daily already completed today."})
-    else:
-        if is_daily:
-            total, streak = database.fail_daily(user_id, user.get("username"), user.get("avatar"))
-            result.update({"total": total, "streak": streak})
+    try:
+        if is_correct:
+            if is_daily:
+                if database.can_do_daily(user_id):
+                    base_points = 15 if category == "Word" else 30
+                    earned, total, streak = database.reward_daily(user_id, base_points, user.get("username"), user.get("avatar"))
+                    result.update({"earned": earned, "total": total, "streak": streak})
+                else:
+                    result.update({"error": "Daily already completed today."})
+        else:
+            if is_daily:
+                total, streak = database.fail_daily(user_id, user.get("username"), user.get("avatar"))
+                result.update({"total": total, "streak": streak})
+    except Exception as e:
+        print(f"❌ Database error during grading: {e}")
+        result.update({"error": "Database error: Points/streak could not be updated."})
 
     return result
 
