@@ -46,31 +46,37 @@ const Navbar = ({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => v
 )
 
 const Hero = () => (
-  <section className="pt-32 pb-20 px-4 text-center">
-    <motion.h1 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="text-5xl md:text-7xl font-extrabold mb-6"
+  <section className="pt-32 pb-20 px-4 text-center max-w-4xl mx-auto">
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-catppuccin-bg/80 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-2xl shadow-catppuccin-bg-soft/50"
     >
-      Building Digital <br />
-      <span className="text-catppuccin-accent">Experiences</span>
-    </motion.h1>
-    <p className="text-catppuccin-text-soft text-lg max-w-2xl mx-auto mb-10">
-      I'm a developer passionate about creating interactive applications, from Discord bots to modern web platforms.
-    </p>
-    <div className="flex justify-center gap-4">
-      <Link to="/langy" className="bg-catppuccin-accent-soft hover:brightness-110 text-catppuccin-bg px-8 py-3 rounded-full font-semibold transition-all flex items-center gap-2 shadow-lg shadow-catppuccin-accent-soft/20">
-        Try Langy Bot <Zap size={18} />
-      </Link>
-      <a href="https://github.com" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-8 py-3 rounded-full font-semibold transition-all flex items-center gap-2">
-        GitHub <Github size={18} />
-      </a>
-    </div>
+      <motion.h1 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-5xl md:text-7xl font-extrabold mb-6"
+      >
+        Building Digital <br />
+        <span className="text-catppuccin-accent">Experiences</span>
+      </motion.h1>
+      <p className="text-catppuccin-text-soft text-lg max-w-2xl mx-auto mb-10">
+        I'm a developer passionate about creating interactive applications, from Discord bots to modern web platforms.
+      </p>
+      <div className="flex justify-center gap-4">
+        <Link to="/langy" className="bg-catppuccin-accent-soft hover:brightness-110 text-catppuccin-bg px-8 py-3 rounded-full font-semibold transition-all flex items-center gap-2 shadow-lg shadow-catppuccin-accent-soft/20">
+          Try Langy Bot <Zap size={18} />
+        </Link>
+        <a href="https://github.com" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-8 py-3 rounded-full font-semibold transition-all flex items-center gap-2">
+          GitHub <Github size={18} />
+        </a>
+      </div>
+    </motion.div>
   </section>
 )
 
 const ProjectCard = ({ title, description, tags, link }: any) => (
-  <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-6 hover:border-catppuccin-accent/50 transition-all group shadow-sm">
+  <div className="bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-2xl p-6 hover:border-catppuccin-accent/50 transition-all group shadow-sm">
     <h3 className="text-2xl font-bold mb-3 group-hover:text-catppuccin-accent transition-colors">{title}</h3>
     <p className="text-catppuccin-text-soft mb-6">{description}</p>
     <div className="flex flex-wrap gap-2 mb-6">
@@ -86,20 +92,22 @@ const ProjectCard = ({ title, description, tags, link }: any) => (
 
 const Projects = () => (
   <section id="projects" className="py-20 max-w-7xl mx-auto px-4">
-    <h2 className="text-3xl font-bold mb-12">Featured Projects</h2>
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <ProjectCard 
-        title="Langy Discord Bot"
-        description="A language learning bot that uses semantic ML to grade translations and track streaks."
-        tags={['Python', 'Discord.py', 'NLP', 'FastAPI']}
-        link="/langy"
-      />
-      <ProjectCard 
-        title="Personal Portfolio"
-        description="This website! Built with React, Vite, and Tailwind CSS."
-        tags={['React', 'TypeScript', 'Tailwind']}
-        link="/"
-      />
+    <div className="bg-catppuccin-bg/60 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem]">
+      <h2 className="text-3xl font-bold mb-12">Featured Projects</h2>
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <ProjectCard 
+          title="Langy Discord Bot"
+          description="A language learning bot that uses semantic ML to grade translations and track streaks."
+          tags={['Python', 'Discord.py', 'NLP', 'FastAPI']}
+          link="/langy"
+        />
+        <ProjectCard 
+          title="Personal Portfolio"
+          description="This website! Built with React, Vite, and Tailwind CSS."
+          tags={['React', 'TypeScript', 'Tailwind']}
+          link="/"
+        />
+      </div>
     </div>
   </section>
 )
@@ -283,7 +291,7 @@ const LangyPage = () => {
   return (
     <div className="pt-32 max-w-5xl mx-auto px-4 pb-20">
       {token && user && (
-        <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-catppuccin-bg-soft p-6 rounded-2xl border-2 border-catppuccin-border backdrop-blur-sm gap-6 shadow-md">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-catppuccin-bg/90 p-6 rounded-2xl border-2 border-catppuccin-border backdrop-blur-sm gap-6 shadow-md">
           <div className="flex items-center gap-4">
             {user?.avatar ? (
               <img 
@@ -332,7 +340,7 @@ const LangyPage = () => {
 
       <div className="grid lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-3xl p-6 shadow-sm">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 shadow-sm">
             <h4 className="text-sm font-bold mb-6 flex items-center gap-2 text-catppuccin-text uppercase tracking-widest">
               <AlertCircle size={16} className="text-catppuccin-accent" /> How to Play
             </h4>
@@ -356,7 +364,7 @@ const LangyPage = () => {
           </motion.div>
 
           {!challenge ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg-soft p-8 rounded-3xl border-2 border-catppuccin-border shadow-xl">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/90 backdrop-blur-sm p-8 rounded-3xl border-2 border-catppuccin-border shadow-xl">
               <h4 className="text-xl font-bold mb-8 flex items-center gap-2">
                 <Zap className="text-catppuccin-accent-soft" /> Start a Challenge
               </h4>
@@ -409,7 +417,7 @@ const LangyPage = () => {
               </div>
             </motion.div>
           ) : (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-3xl p-10 relative overflow-hidden shadow-2xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-catppuccin-bg/90 backdrop-blur-md border-2 border-catppuccin-border rounded-3xl p-10 relative overflow-hidden shadow-2xl">
               <div className="flex justify-between items-center mb-8">
                 <span className="bg-catppuccin-accent/20 text-catppuccin-accent px-4 py-1 rounded-full text-xs font-bold border-2 border-catppuccin-accent/30 uppercase tracking-widest">{isDaily ? 'Daily' : 'Practice'} - {challenge.category}</span>
                 <div className={`text-xl font-mono font-bold ${timer < 10 ? 'text-red-500' : 'text-catppuccin-text-soft'}`}>00:{timer < 10 ? `0${timer}` : timer}</div>
@@ -442,7 +450,7 @@ const LangyPage = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-3xl p-6 h-full backdrop-blur-sm shadow-md">
+          <div className="bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 h-full shadow-md">
             <div className="flex flex-col mb-6">
               <div className="flex items-center justify-between">
                 <h4 className="text-lg font-bold flex items-center gap-2"><Trophy className="text-catppuccin-accent" size={20} /> Leaderboard</h4>
@@ -468,9 +476,31 @@ const LangyPage = () => {
           </div>
         </div>
       </div>
-      <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mt-20 pt-12 border-t-2 border-catppuccin-border grid md:grid-cols-2 gap-12 text-catppuccin-text-soft">
-        <div><h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent">About Project</h4><p className="leading-relaxed mb-6 font-medium">Langy uses semantic embeddings and hierarchical linguistic analysis to understand the <em>meaning</em> behind your translations.</p></div>
-        <div><h4 className="text-2xl font-bold mb-4 text-catppuccin-accent">Add to Discord</h4><p className="leading-relaxed mb-8 font-medium">Master new languages with your community! Add Langy for daily challenges and leaderboard tracking.</p><motion.a whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} href={clientId ? `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=2147483648&scope=bot%20applications.commands` : "#"} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center gap-3 bg-catppuccin-accent hover:brightness-110 px-10 py-5 rounded-2xl font-black text-catppuccin-bg shadow-2xl shadow-catppuccin-accent/30 transition-all border-2 border-catppuccin-accent/20 ${!clientId ? 'opacity-50' : ''}`}><Bot size={24} />{clientId ? 'Add Langy to Discord' : 'Loading...'}</motion.a></div>
+      
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        whileInView={{ opacity: 1 }} 
+        viewport={{ once: true }} 
+        className="mt-20 bg-catppuccin-bg/80 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] grid md:grid-cols-2 gap-12 text-catppuccin-text-soft shadow-xl"
+      >
+        <div>
+          <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent">About Project</h4>
+          <p className="leading-relaxed mb-6 font-medium">Langy uses semantic embeddings and hierarchical linguistic analysis to understand the <em>meaning</em> behind your translations.</p>
+        </div>
+        <div>
+          <h4 className="text-2xl font-bold mb-4 text-catppuccin-accent">Add to Discord</h4>
+          <p className="leading-relaxed mb-8 font-medium">Master new languages with your community! Add Langy for daily challenges and leaderboard tracking.</p>
+          <motion.a 
+            whileHover={{ scale: 1.05, y: -2 }} 
+            whileTap={{ scale: 0.95 }} 
+            href={clientId ? `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=2147483648&scope=bot%20applications.commands` : "#"} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className={`inline-flex items-center gap-3 bg-catppuccin-accent hover:brightness-110 px-10 py-5 rounded-2xl font-black text-catppuccin-bg shadow-2xl shadow-catppuccin-accent/30 transition-all border-2 border-catppuccin-accent/20 ${!clientId ? 'opacity-50' : ''}`}
+          >
+            <Bot size={24} />{clientId ? 'Add Langy to Discord' : 'Loading...'}
+          </motion.a>
+        </div>
       </motion.div>
 
       {/* Security & Privacy Section */}
@@ -478,7 +508,7 @@ const LangyPage = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="mt-12 bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-3xl p-8 relative overflow-hidden shadow-lg"
+        className="mt-12 bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-8 relative overflow-hidden shadow-lg"
       >
         <div className="absolute top-0 right-0 p-8 opacity-5">
           <ShieldCheck size={120} />
