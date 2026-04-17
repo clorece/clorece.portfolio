@@ -95,8 +95,8 @@ def evaluate_multiplier(multiplier: int, last_daily_date: Optional[str]) -> int:
     if not last_daily_date: return 1
     try:
         last_date_obj = datetime.datetime.fromisoformat(last_daily_date).date()
-        # Use EST (UTC-5) for consistent reset at 12am EST
-        tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+        # Use EDT (UTC-4) for consistent reset at 12am local time
+        tz_est = datetime.timezone(datetime.timedelta(hours=-4))
         now_date_obj = datetime.datetime.now(tz_est).date()
         diff = (now_date_obj - last_date_obj).days
         if diff == 1: return min(multiplier + 1, 7)
@@ -138,7 +138,7 @@ def get_leaderboard_cached():
     }
 
 def reward_daily(user_id: str, base_points: int, username: str = None, avatar: str = None) -> Tuple[int, int, int]:
-    tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+    tz_est = datetime.timezone(datetime.timedelta(hours=-4))
     now_date = datetime.datetime.now(tz_est).date().isoformat()
     points, multiplier, last_daily_date = get_user(user_id)
     new_multiplier = evaluate_multiplier(multiplier, last_daily_date)
@@ -172,7 +172,7 @@ def reward_daily(user_id: str, base_points: int, username: str = None, avatar: s
         if conn: connection_pool.putconn(conn)
 
 def fail_daily(user_id: str, username: str = None, avatar: str = None) -> Tuple[int, int]:
-    tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+    tz_est = datetime.timezone(datetime.timedelta(hours=-4))
     now_date = datetime.datetime.now(tz_est).date().isoformat()
     points, multiplier, last_daily_date = get_user(user_id)
     
@@ -205,7 +205,7 @@ def can_do_daily(user_id: str) -> bool:
     _, _, last_daily_date = get_user(user_id)
     if not last_daily_date: return True
     # Consistent EST check
-    tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+    tz_est = datetime.timezone(datetime.timedelta(hours=-4))
     now_est = datetime.datetime.now(tz_est).date()
     return datetime.datetime.fromisoformat(last_daily_date).date() < now_est
 

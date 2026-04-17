@@ -163,14 +163,20 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date()
-      // Target: 12 AM EST = 5 AM UTC
+      // Target: 12 AM EDT = 4 AM UTC (Currently most users are in DST)
       let target = new Date(now)
-      target.setUTCHours(5, 0, 0, 0)
+      target.setUTCHours(4, 0, 0, 0)
       if (target <= now) {
         target.setUTCDate(target.getUTCDate() + 1)
       }
       
       const diff = target.getTime() - now.getTime()
+      
+      // If we are within the first second of a new daily reset, refresh user stats
+      // This ensures the "Launch Daily" button appears without a manual page refresh
+      if (diff > 86398000 && token) {
+        fetchUserStats()
+      }
       
       const hours = Math.floor(diff / (1000 * 60 * 60))
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
@@ -178,7 +184,7 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
       setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`)
     }, 1000)
     return () => clearInterval(timer)
-  }, [])
+  }, [token])
 
   useEffect(() => {
     const urlToken = searchParams.get('token')
