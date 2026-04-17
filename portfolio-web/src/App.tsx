@@ -10,7 +10,6 @@ const API_BASE = import.meta.env.VITE_API_URL || "/api"
 
 const renderMarkdown = (text: string) => {
   if (!text) return null;
-  // Handle bold (**text**) and italics (*text*)
   const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
@@ -29,19 +28,19 @@ const Navbar = ({ isDark, toggleTheme, isGlass, toggleGlass }: { isDark: boolean
       <Link to="/" className="text-lg md:text-xl font-bold bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft bg-clip-text text-transparent">
         MyPortfolio
       </Link>
-      <div className="flex items-center gap-4 md:gap-8">
-        <Link to="/" className="hover:text-catppuccin-accent transition-colors text-xs md:text-sm font-medium">Projects</Link>
+      <div className="flex items-center gap-2 md:gap-8">
+        <Link to="/" className="hover:text-catppuccin-accent transition-colors text-xs md:text-sm font-medium hidden sm:block">Projects</Link>
         <Link to="/langy" className="hover:text-catppuccin-accent-soft transition-colors flex items-center gap-1 text-xs md:text-sm font-medium">
           <Languages size={14} className="md:w-4 md:h-4" /> Langy
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2">
           <button 
             onClick={toggleGlass}
-            className="hidden md:flex p-2 rounded-full hover:bg-catppuccin-bg-soft transition-colors text-catppuccin-accent border border-catppuccin-border items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3"
+            className="flex p-1.5 md:p-2 rounded-full hover:bg-catppuccin-bg-soft transition-colors text-catppuccin-accent border border-catppuccin-border items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 md:px-3"
             title="Toggle Glass Effect"
           >
             {isGlass ? <ShieldCheck size={16} /> : <EyeOff size={16} />} 
-            Glass
+            <span className="hidden xs:block">Glass</span>
           </button>
           <button 
             onClick={toggleTheme}
@@ -102,7 +101,7 @@ const ProjectCard = ({ title, description, tags, link }: any) => (
 
 const Projects = ({ isGlass }: { isGlass: boolean }) => (
   <section id="projects" className="py-20 max-w-7xl mx-auto px-4">
-    <div className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-xl shadow-black/10 transition-all`}>
+    <div className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-xl shadow-black/10 transition-all`}>
       <h2 className="text-3xl font-bold mb-12">Featured Projects</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <ProjectCard 
@@ -124,7 +123,7 @@ const Projects = ({ isGlass }: { isGlass: boolean }) => (
 
 // --- Langy Web App ---
 
-const LangyPage = () => {
+const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
   const [searchParams] = useSearchParams()
   const [token, setToken] = useState<string | null>(localStorage.getItem('langy_token'))
   const [user, setUser] = useState<any>(null)
@@ -164,16 +163,14 @@ const LangyPage = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date()
-      // EST is UTC-5
-      const estOffset = -5 * 60; // in minutes
-      // Get current time in EST
-      const nowEst = new Date(now.getTime() + (now.getTimezoneOffset() + estOffset) * 60000);
+      // Target: 12 AM EST = 5 AM UTC
+      let target = new Date(now)
+      target.setUTCHours(5, 0, 0, 0)
+      if (target <= now) {
+        target.setUTCDate(target.getUTCDate() + 1)
+      }
       
-      // Calculate next midnight in EST
-      const midnightEst = new Date(nowEst);
-      midnightEst.setHours(24, 0, 0, 0);
-      
-      const diff = midnightEst.getTime() - nowEst.getTime();
+      const diff = target.getTime() - now.getTime()
       
       const hours = Math.floor(diff / (1000 * 60 * 60))
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
@@ -221,6 +218,7 @@ const LangyPage = () => {
       } else {
         localStorage.removeItem('langy_token')
         setToken(null)
+        setUser(null)
       }
     } catch (e) { console.error(e) }
   }
@@ -317,7 +315,7 @@ const LangyPage = () => {
   return (
     <div className="pt-20 md:pt-32 max-w-5xl mx-auto px-4 pb-20">
       {token && user && (
-        <div className="flex flex-col lg:flex-row items-center justify-between mb-8 md:mb-12 bg-catppuccin-bg/95 p-4 md:p-6 rounded-2xl border-2 border-catppuccin-border backdrop-blur-sm gap-6 shadow-md">
+        <div className={`flex flex-col lg:flex-row items-center justify-between mb-8 md:mb-12 ${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-sm' : 'bg-catppuccin-bg'} p-4 md:p-6 rounded-2xl border-2 border-catppuccin-border gap-6 shadow-md transition-all`}>
           <div className="flex items-center gap-4 w-full lg:w-auto">
             {user?.avatar ? (
               <img 
@@ -358,7 +356,7 @@ const LangyPage = () => {
       )}
 
       {dbError && (
-        <div className="mb-8 p-4 bg-red-500/10 border-2 border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
+        <div className={`mb-8 p-4 bg-red-500/10 border-2 border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 ${isGlass ? 'backdrop-blur-sm' : ''}`}>
           <AlertCircle size={20} className="shrink-0" />
           <p className="text-xs md:text-sm">Database connection issue detected. Points may not be saving correctly.</p>
         </div>
@@ -366,7 +364,7 @@ const LangyPage = () => {
 
       <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
         <div className="lg:col-span-2 space-y-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-sm' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm transition-all`}>
             <h4 className="text-[10px] md:text-xs font-bold mb-6 flex items-center gap-2 text-catppuccin-text uppercase tracking-widest">
               <AlertCircle size={16} className="text-catppuccin-accent" /> How to Play
             </h4>
@@ -390,7 +388,7 @@ const LangyPage = () => {
           </motion.div>
 
           {!challenge ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm p-6 md:p-8 rounded-2xl md:rounded-3xl border-2 border-catppuccin-border shadow-xl">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-sm' : 'bg-catppuccin-bg'} p-6 md:p-8 rounded-2xl md:rounded-3xl border-2 border-catppuccin-border shadow-xl transition-all`}>
               <h4 className="text-lg md:text-xl font-bold mb-8 flex items-center gap-2">
                 <Zap className="text-catppuccin-accent-soft" /> Start a Challenge
               </h4>
@@ -443,7 +441,7 @@ const LangyPage = () => {
               </div>
             </motion.div>
           ) : (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-6 md:p-10 relative overflow-hidden shadow-2xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-6 md:p-10 relative overflow-hidden shadow-2xl transition-all`}>
               <div className="flex justify-between items-center mb-8">
                 <span className="bg-catppuccin-accent/20 text-catppuccin-accent px-3 md:px-4 py-1 rounded-full text-[10px] md:text-xs font-bold border-2 border-catppuccin-accent/30 uppercase tracking-widest">{isDaily ? 'Daily' : 'Practice'} - {challenge.category}</span>
                 <div className={`text-lg md:text-xl font-mono font-bold ${timer < 10 ? 'text-red-500' : 'text-catppuccin-text-soft'}`}>00:{timer < 10 ? `0${timer}` : timer}</div>
@@ -476,7 +474,7 @@ const LangyPage = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 h-full shadow-md">
+          <div className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-sm' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border rounded-3xl p-6 h-full shadow-md transition-all`}>
             <div className="flex flex-col mb-6">
               <div className="flex items-center justify-between">
                 <h4 className="text-lg font-bold flex items-center gap-2"><Trophy className="text-catppuccin-accent" size={20} /> Leaderboard</h4>
@@ -507,7 +505,7 @@ const LangyPage = () => {
         initial={{ opacity: 0 }} 
         whileInView={{ opacity: 1 }} 
         viewport={{ once: true }} 
-        className="mt-12 md:mt-20 bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] grid md:grid-cols-2 gap-8 md:gap-12 text-catppuccin-text-soft shadow-xl shadow-black/10"
+        className={`mt-12 md:mt-20 ${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] grid md:grid-cols-2 gap-8 md:gap-12 text-catppuccin-text-soft shadow-xl shadow-black/10 transition-all`}
       >
         <div>
           <h4 className="text-xl md:text-2xl font-bold mb-4 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent">About Project</h4>
@@ -534,7 +532,7 @@ const LangyPage = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="mt-8 md:mt-12 bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-lg shadow-black/10"
+        className={`mt-8 md:mt-12 ${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-sm' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-lg shadow-black/10 transition-all`}
       >
         <div className="absolute top-0 right-0 p-8 opacity-5">
           <ShieldCheck size={120} />
