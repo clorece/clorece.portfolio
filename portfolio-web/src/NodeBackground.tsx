@@ -21,18 +21,17 @@ const NodeBackground: React.FC = () => {
   const ENHANCED_OPACITY = 0.9;
   const BASE_LINE_WIDTH = 1.2;
   const ENHANCED_LINE_WIDTH = 3.0;
-  const MAX_CONNECT_DISTANCE = 320;
-  const FADE_START_THRESHOLD = 250; // Distance at which lines start to fade out
+  const MAX_CONNECT_DISTANCE = 280; // Increased to allow farther connections
 
   const initNodes = (width: number, height: number) => {
     const nodes: Node[] = [];
-    const count = 180;
+    const count = 220; // Slightly tuned for performance with larger connection range
     for (let i = 0; i < count; i++) {
       nodes.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: (Math.random() - 0.5) * 0.18,
         z: Math.random() * 2 + 1,
         baseSize: Math.random() * 1.8 + 1.5,
         colorMix: Math.random(),
@@ -79,8 +78,8 @@ const NodeBackground: React.FC = () => {
       if (n.y < 0) n.y = height;
       if (n.y > height) n.y = 0;
 
-      const parallaxX = (mouse.x - width / 2) * (n.z * 0.012);
-      const parallaxY = (mouse.y - height / 2) * (n.z * 0.012);
+      const parallaxX = (mouse.x - width / 2) * (n.z * 0.01);
+      const parallaxY = (mouse.y - height / 2) * (n.z * 0.01);
 
       return {
         rx: (n.x + parallaxX + width) % width,
@@ -115,25 +114,15 @@ const NodeBackground: React.FC = () => {
       context.fill();
       context.shadowBlur = 0;
 
-      const distances = [];
-      for (let j = 0; j < renderedNodes.length; j++) {
-        if (i === j) continue;
+      for (let j = i + 1; j < renderedNodes.length; j++) {
         const nodeJ = renderedNodes[j];
         const dx = nodeI.rx - nodeJ.rx;
         const dy = nodeI.ry - nodeJ.ry;
-        distances.push({ index: j, dist: dx * dx + dy * dy });
-      }
-
-      distances.sort((a, b) => a.dist - b.dist);
-      const nearest = distances.slice(0, 3);
-
-      for (const neighbor of nearest) {
-        if (i > neighbor.index) continue;
-
-        const nodeJ = renderedNodes[neighbor.index];
-        const distActual = Math.sqrt(neighbor.dist);
+        const distSq = dx * dx + dy * dy;
         
-        if (distActual < MAX_CONNECT_DISTANCE) {
+        if (distSq < MAX_CONNECT_DISTANCE * MAX_CONNECT_DISTANCE) {
+          const distActual = Math.sqrt(distSq);
+          
           const mDxMouse = nodeJ.rx - mouse.x;
           const mDyMouse = nodeJ.ry - mouse.y;
           const mDistMouse = Math.sqrt(mDxMouse * mDxMouse + mDyMouse * mDyMouse);
@@ -142,18 +131,12 @@ const NodeBackground: React.FC = () => {
           const avgFactor = (factor + mFactor) / 2;
           const avgColorMix = (nodeI.n.colorMix + nodeJ.n.colorMix) / 2;
           
-          const lineOpacity = (BASE_OPACITY * 0.6) + (ENHANCED_OPACITY * 0.65 - BASE_OPACITY * 0.6) * avgFactor;
+          const lineOpacityBase = (BASE_OPACITY * 0.5) + (ENHANCED_OPACITY * 0.6 - BASE_OPACITY * 0.5) * avgFactor;
           const lineWidth = BASE_LINE_WIDTH + (ENHANCED_LINE_WIDTH - BASE_LINE_WIDTH) * avgFactor;
 
-          // SMOOTH TRANSITION: Calculate fade based on distance
-          // Line is full strength up to FADE_START_THRESHOLD, then fades out to MAX_CONNECT_DISTANCE
-          let distanceFade = 1.0;
-          if (distActual > FADE_START_THRESHOLD) {
-            distanceFade = 1 - (distActual - FADE_START_THRESHOLD) / (MAX_CONNECT_DISTANCE - FADE_START_THRESHOLD);
-          }
-          
-          const finalOpacity = lineOpacity * distanceFade;
-          
+          const distanceFade = 1 - (distActual / MAX_CONNECT_DISTANCE);
+          const finalOpacity = lineOpacityBase * distanceFade;
+
           if (finalOpacity > 0.01) {
             context.strokeStyle = getInterpolatedColor(pRGB[0], pRGB[1], pRGB[2], sRGB[0], sRGB[1], sRGB[2], avgColorMix, finalOpacity);
             context.lineWidth = lineWidth;
