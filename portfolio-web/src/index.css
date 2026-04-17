@@ -39,12 +39,14 @@
 }
 
 body {
-  @apply bg-[#1e1e2e] text-catppuccin-text transition-colors duration-300;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  @apply transition-colors duration-300;
   font-family: 'JetBrains Mono', monospace;
 }
 
 .dark body {
-  @apply bg-[#11111b];
+  background-color: var(--bg-primary);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
