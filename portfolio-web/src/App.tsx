@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw, Bot, ExternalLink, Sun, Moon } from 'lucide-react'
@@ -145,6 +145,11 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [clientId, setClientId] = useState<string | null>(null)
 
+  // Track the current EDT date to detect midnight resets reliably
+  const dailyRefreshRef = useRef(
+    new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString().split('T')[0]
+  )
+
   useEffect(() => {
     fetchLanguages()
     fetch(`${API_BASE}/config`)
@@ -172,9 +177,13 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
       
       const diff = target.getTime() - now.getTime()
       
-      // If we are within the first second of a new daily reset, refresh user stats
-      // This ensures the "Launch Daily" button appears without a manual page refresh
-      if (diff > 86398000 && token) {
+      // Detect daily reset by comparing EDT dates. When the date string changes
+      // (midnight EDT), we know a new day has started — refresh stats exactly once
+      // so the "Launch Daily" button appears without a manual page refresh.
+      const edtMs = now.getTime() - (4 * 60 * 60 * 1000)
+      const edtDate = new Date(edtMs).toISOString().split('T')[0]
+      if (edtDate !== dailyRefreshRef.current && token) {
+        dailyRefreshRef.current = edtDate
         fetchUserStats()
       }
       
