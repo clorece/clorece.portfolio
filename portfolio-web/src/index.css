@@ -2,30 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Catppuccin Latte (Light) */
+/* 
+  Catppuccin Latte (Light) 
+  Refined to use specific Surface colors for better border visibility
+*/
 :root {
-  --bg-primary: #eff1f5;
-  --bg-secondary: #e6e9ef;
-  --text-primary: #4c4f69;
-  --text-secondary: #5c5f77;
-  --accent-primary: #1e66f5; /* Sapphire */
-  --accent-secondary: #40a02b; /* Green */
-  --border-color: #ccd0da;
-  --node-color: rgba(76, 79, 105, 0.6);
-  --line-color: rgba(76, 79, 105, 0.35);
+  --bg-primary: #eff1f5;     /* Base */
+  --bg-secondary: #e6e9ef;   /* Mantle */
+  --text-primary: #4c4f69;   /* Text */
+  --text-secondary: #6c6f85; /* Subtext0 */
+  --accent-primary: #dc8a78; /* Rosewater */
+  --accent-secondary: #7287fd; /* Lavender */
+  --border-color: #acb0be;   /* Surface2 (Higher contrast for tiles) */
+  --node-color: rgba(92, 95, 119, 0.65);  /* Subtext1 */
+  --line-color: rgba(92, 95, 119, 0.4);   /* Subtext1 */
 }
 
-/* Catppuccin Macchiato (Dark) */
+/* 
+  Catppuccin Macchiato (Dark) 
+  Refined for depth and visibility
+*/
 .dark {
-  --bg-primary: #24273a;
-  --bg-secondary: #1e2030;
-  --text-primary: #cad3f5;
-  --text-secondary: #a5adcb;
-  --accent-primary: #8aadf4; /* Blue */
-  --accent-secondary: #a6da95; /* Green */
-  --border-color: #363a4f;
-  --node-color: rgba(202, 211, 245, 0.6);
-  --line-color: rgba(202, 211, 245, 0.35);
+  --bg-primary: #24273a;     /* Base */
+  --bg-secondary: #1e2030;   /* Mantle */
+  --text-primary: #cad3f5;   /* Text */
+  --text-secondary: #a5adcb; /* Subtext0 */
+  --accent-primary: #f4dbd6; /* Rosewater */
+  --accent-secondary: #b7bdf8; /* Lavender */
+  --border-color: #5b6078;   /* Surface2 (Crisp borders for dark mode) */
+  --node-color: rgba(184, 192, 224, 0.65); /* Subtext1 */
+  --line-color: rgba(184, 192, 224, 0.4);  /* Subtext1 */
 }
 
 body {
@@ -42,12 +48,12 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--accent-primary);
-  opacity: 0.2;
+  background-color: var(--accent-secondary);
+  opacity: 0.3;
   border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--accent-primary);
-  opacity: 0.3;
+  background-color: var(--accent-secondary);
+  opacity: 0.5;
 }
