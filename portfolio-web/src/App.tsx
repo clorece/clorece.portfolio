@@ -26,19 +26,19 @@ const renderMarkdown = (text: string) => {
 const Navbar = ({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) => (
   <nav className="fixed top-0 w-full z-50 bg-catppuccin-bg/95 backdrop-blur-md border-b border-catppuccin-border">
     <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-      <Link to="/" className="text-xl font-bold bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft bg-clip-text text-transparent">
+      <Link to="/" className="text-lg md:text-xl font-bold bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft bg-clip-text text-transparent">
         MyPortfolio
       </Link>
-      <div className="flex items-center gap-8">
-        <Link to="/" className="hover:text-catppuccin-accent transition-colors text-sm font-medium">Projects</Link>
-        <Link to="/langy" className="hover:text-catppuccin-accent-soft transition-colors flex items-center gap-1 text-sm font-medium">
-          <Languages size={16} /> Langy
+      <div className="flex items-center gap-4 md:gap-8">
+        <Link to="/" className="hover:text-catppuccin-accent transition-colors text-xs md:text-sm font-medium">Projects</Link>
+        <Link to="/langy" className="hover:text-catppuccin-accent-soft transition-colors flex items-center gap-1 text-xs md:text-sm font-medium">
+          <Languages size={14} className="md:w-4 md:h-4" /> Langy
         </Link>
         <button 
           onClick={toggleTheme}
-          className="p-2 rounded-full hover:bg-catppuccin-bg-soft transition-colors text-catppuccin-accent border border-catppuccin-border"
+          className="p-1.5 md:p-2 rounded-full hover:bg-catppuccin-bg-soft transition-colors text-catppuccin-accent border border-catppuccin-border"
         >
-          {isDark ? <Sun size={20} /> : <Moon size={20} />}
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
     </div>
@@ -46,28 +46,28 @@ const Navbar = ({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => v
 )
 
 const Hero = () => (
-  <section className="pt-32 pb-20 px-4 text-center max-w-4xl mx-auto">
+  <section className="pt-24 md:pt-32 pb-10 md:pb-20 px-4 text-center max-w-4xl mx-auto">
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-2xl shadow-black/20"
+      className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-2xl shadow-black/20"
     >
       <motion.h1 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-5xl md:text-7xl font-extrabold mb-6"
+        className="text-4xl md:text-7xl font-extrabold mb-6"
       >
         Building Digital <br />
         <span className="text-catppuccin-accent">Experiences</span>
       </motion.h1>
-      <p className="text-catppuccin-text-soft text-lg max-w-2xl mx-auto mb-10">
+      <p className="text-catppuccin-text-soft text-base md:text-lg max-w-2xl mx-auto mb-10">
         I'm a developer passionate about creating interactive applications, from Discord bots to modern web platforms.
       </p>
-      <div className="flex justify-center gap-4">
-        <Link to="/langy" className="bg-catppuccin-accent-soft hover:brightness-110 text-catppuccin-bg px-8 py-3 rounded-full font-semibold transition-all flex items-center gap-2 shadow-lg shadow-catppuccin-accent-soft/20">
+      <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <Link to="/langy" className="bg-catppuccin-accent-soft hover:brightness-110 text-catppuccin-bg px-6 md:px-8 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-catppuccin-accent-soft/20">
           Try Langy Bot <Zap size={18} />
         </Link>
-        <a href="https://github.com" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-8 py-3 rounded-full font-semibold transition-all flex items-center gap-2">
+        <a href="https://github.com" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 md:px-8 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2">
           GitHub <Github size={18} />
         </a>
       </div>
@@ -290,40 +290,40 @@ const LangyPage = () => {
   }
 
   return (
-    <div className="pt-32 max-w-5xl mx-auto px-4 pb-20">
+    <div className="pt-20 md:pt-32 max-w-5xl mx-auto px-4 pb-20">
       {token && user && (
-        <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-catppuccin-bg/95 p-6 rounded-2xl border-2 border-catppuccin-border backdrop-blur-sm gap-6 shadow-md">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col lg:flex-row items-center justify-between mb-8 md:mb-12 bg-catppuccin-bg/95 p-4 md:p-6 rounded-2xl border-2 border-catppuccin-border backdrop-blur-sm gap-6 shadow-md">
+          <div className="flex items-center gap-4 w-full lg:w-auto">
             {user?.avatar ? (
               <img 
                 src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`} 
                 alt="Profile"
-                className="w-14 h-14 rounded-full border-2 border-catppuccin-accent-soft shadow-lg shadow-catppuccin-accent-soft/20"
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-catppuccin-accent-soft shadow-lg shadow-catppuccin-accent-soft/20"
               />
             ) : (
-              <div className="w-14 h-14 bg-catppuccin-accent-soft rounded-full flex items-center justify-center font-bold text-2xl text-catppuccin-bg">
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-catppuccin-accent-soft rounded-full flex items-center justify-center font-bold text-xl md:text-2xl text-catppuccin-bg">
                 {user?.username?.[0].toUpperCase()}
               </div>
             )}
-            <div>
-              <h3 className="font-bold text-xl">{user?.username}</h3>
-              <p className="text-sm text-catppuccin-text-soft">Level: Language Learner</p>
+            <div className="min-w-0">
+              <h3 className="font-bold text-lg md:text-xl truncate">{user?.username}</h3>
+              <p className="text-xs md:text-sm text-catppuccin-text-soft">Level: Language Learner</p>
             </div>
           </div>
-          <div className="flex gap-8 items-center">
-            <div className="text-center">
-              <p className="text-xs text-catppuccin-text-soft uppercase tracking-widest mb-1 font-bold">Total Points</p>
-              <p className="text-2xl font-bold text-catppuccin-accent">{user?.points || 0}</p>
+          <div className="flex flex-wrap md:flex-nowrap gap-4 md:gap-8 items-center justify-center w-full lg:w-auto">
+            <div className="text-center flex-1 lg:flex-none">
+              <p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest mb-1 font-bold">Total Points</p>
+              <p className="text-xl md:text-2xl font-bold text-catppuccin-accent">{user?.points || 0}</p>
             </div>
-            <div className="text-center border-l-2 border-catppuccin-border pl-8">
-              <p className="text-xs text-catppuccin-text-soft uppercase tracking-widest mb-1 font-bold">Streak Multiplier</p>
-              <p className="text-2xl font-bold text-catppuccin-accent-soft">
-                <Zap className="inline-block mr-1" size={24} /> x{user?.multiplier || 1}
+            <div className="text-center border-l-2 border-catppuccin-border pl-4 md:pl-8 flex-1 lg:flex-none">
+              <p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest mb-1 font-bold">Streak Multiplier</p>
+              <p className="text-xl md:text-2xl font-bold text-catppuccin-accent-soft flex items-center justify-center">
+                <Zap className="mr-1 w-5 h-5 md:w-6 md:h-6" /> x{user?.multiplier || 1}
               </p>
             </div>
             <button 
               onClick={handleLogout}
-              className="ml-4 p-2 text-catppuccin-text-soft hover:text-red-400 transition-colors border-2 border-catppuccin-border rounded-lg hover:bg-red-500/10"
+              className="p-2 text-catppuccin-text-soft hover:text-red-400 transition-colors border-2 border-catppuccin-border rounded-lg hover:bg-red-500/10"
               title="Logout"
             >
               <LogOut size={20} />
@@ -334,15 +334,15 @@ const LangyPage = () => {
 
       {dbError && (
         <div className="mb-8 p-4 bg-red-500/10 border-2 border-red-500/20 rounded-xl flex items-center gap-3 text-red-400">
-          <AlertCircle size={20} />
-          <p className="text-sm">Database connection issue detected. Points may not be saving correctly.</p>
+          <AlertCircle size={20} className="shrink-0" />
+          <p className="text-xs md:text-sm">Database connection issue detected. Points may not be saving correctly.</p>
         </div>
       )}
 
-      <div className="grid lg:grid-cols-3 gap-12">
+      <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
         <div className="lg:col-span-2 space-y-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 shadow-sm">
-            <h4 className="text-sm font-bold mb-6 flex items-center gap-2 text-catppuccin-text uppercase tracking-widest">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm">
+            <h4 className="text-[10px] md:text-xs font-bold mb-6 flex items-center gap-2 text-catppuccin-text uppercase tracking-widest">
               <AlertCircle size={16} className="text-catppuccin-accent" /> How to Play
             </h4>
             <div className="grid sm:grid-cols-3 gap-6">
@@ -365,20 +365,20 @@ const LangyPage = () => {
           </motion.div>
 
           {!challenge ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm p-8 rounded-3xl border-2 border-catppuccin-border shadow-xl">
-              <h4 className="text-xl font-bold mb-8 flex items-center gap-2">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm p-6 md:p-8 rounded-2xl md:rounded-3xl border-2 border-catppuccin-border shadow-xl">
+              <h4 className="text-lg md:text-xl font-bold mb-8 flex items-center gap-2">
                 <Zap className="text-catppuccin-accent-soft" /> Start a Challenge
               </h4>
-              <div className="grid md:grid-cols-2 gap-8 mb-10">
+              <div className="grid md:grid-cols-2 gap-6 md:gap-8 mb-10">
                 <div className="space-y-3">
-                  <p className="text-xs text-catppuccin-text uppercase tracking-widest font-bold">1. Mode</p>
+                  <p className="text-[10px] md:text-xs text-catppuccin-text uppercase tracking-widest font-bold">1. Mode</p>
                   <div className="flex gap-2">
                     <button onClick={() => setIsInverse(false)} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${!isInverse ? 'bg-catppuccin-accent text-catppuccin-bg border-catppuccin-accent' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Standard</button>
                     <button onClick={() => setIsInverse(true)} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${isInverse ? 'bg-catppuccin-accent text-catppuccin-bg border-catppuccin-accent' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Inverse</button>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <p className="text-xs text-catppuccin-text uppercase tracking-widest font-bold">2. Difficulty</p>
+                  <p className="text-[10px] md:text-xs text-catppuccin-text uppercase tracking-widest font-bold">2. Difficulty</p>
                   <div className="flex gap-2">
                     <button onClick={() => setCategory('Word')} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${category === 'Word' ? 'bg-catppuccin-accent-soft text-catppuccin-bg border-catppuccin-accent-soft' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Word</button>
                     <button onClick={() => setCategory('Sentence')} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${category === 'Sentence' ? 'bg-catppuccin-accent-soft text-catppuccin-bg border-catppuccin-accent-soft' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Sentence</button>
@@ -387,16 +387,16 @@ const LangyPage = () => {
               </div>
 
               <div className="space-y-4 mb-10">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-catppuccin-text uppercase tracking-widest font-bold">3. Language Selection</p>
-                  <div className="relative group">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <p className="text-[10px] md:text-xs text-catppuccin-text uppercase tracking-widest font-bold">3. Language Selection</p>
+                  <div className="relative group w-full sm:w-auto">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-catppuccin-text-soft group-focus-within:text-catppuccin-accent transition-colors" size={14} />
-                    <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-catppuccin-bg border-2 border-catppuccin-border rounded-lg pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-catppuccin-accent outline-none w-48 transition-all" />
+                    <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-catppuccin-bg border-2 border-catppuccin-border rounded-lg pl-9 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-catppuccin-accent outline-none w-full sm:w-48 transition-all" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar bg-catppuccin-bg p-4 rounded-2xl border-2 border-catppuccin-border">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar bg-catppuccin-bg p-3 md:p-4 rounded-xl border-2 border-catppuccin-border">
                   {languages.filter(lang => lang.toLowerCase().includes(searchQuery.toLowerCase())).map(lang => (
-                    <button key={lang} onClick={() => setSelectedLanguage(lang)} className={`border-2 p-3 rounded-xl font-semibold text-xs transition-all truncate ${selectedLanguage === lang ? 'bg-catppuccin-accent-soft border-catppuccin-accent-soft text-catppuccin-bg shadow-lg shadow-catppuccin-accent-soft/20' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text-soft'}`}>
+                    <button key={lang} onClick={() => setSelectedLanguage(lang)} className={`border-2 p-2.5 md:p-3 rounded-xl font-semibold text-[10px] md:text-xs transition-all truncate ${selectedLanguage === lang ? 'bg-catppuccin-accent-soft border-catppuccin-accent-soft text-catppuccin-bg shadow-lg shadow-catppuccin-accent-soft/20' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text-soft'}`}>
                       {lang}
                     </button>
                   ))}
@@ -410,39 +410,39 @@ const LangyPage = () => {
                 ) : user?.can_do_daily ? (
                   <button onClick={() => startChallenge('daily')} disabled={loading} className="flex-1 bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft hover:brightness-110 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 text-catppuccin-bg"><Trophy size={18} /> Launch Daily</button>
                 ) : (
-                  <div className="flex-1 h-full flex flex-col items-center justify-center px-4 bg-catppuccin-bg rounded-2xl border-2 border-catppuccin-border text-catppuccin-text-soft text-sm font-medium">
-                    <span className="italic opacity-60 text-xs">Next Daily In:</span>
-                    <span className="font-mono text-lg text-catppuccin-accent-soft font-bold">{timeLeft}</span>
+                  <div className="flex-1 h-full flex flex-col items-center justify-center py-2 px-4 bg-catppuccin-bg rounded-2xl border-2 border-catppuccin-border text-catppuccin-text-soft text-sm font-medium">
+                    <span className="italic opacity-60 text-[10px]">Next Daily In:</span>
+                    <span className="font-mono text-base md:text-lg text-catppuccin-accent-soft font-bold">{timeLeft}</span>
                   </div>
                 )}
               </div>
             </motion.div>
           ) : (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border rounded-3xl p-10 relative overflow-hidden shadow-2xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-6 md:p-10 relative overflow-hidden shadow-2xl">
               <div className="flex justify-between items-center mb-8">
-                <span className="bg-catppuccin-accent/20 text-catppuccin-accent px-4 py-1 rounded-full text-xs font-bold border-2 border-catppuccin-accent/30 uppercase tracking-widest">{isDaily ? 'Daily' : 'Practice'} - {challenge.category}</span>
-                <div className={`text-xl font-mono font-bold ${timer < 10 ? 'text-red-500' : 'text-catppuccin-text-soft'}`}>00:{timer < 10 ? `0${timer}` : timer}</div>
+                <span className="bg-catppuccin-accent/20 text-catppuccin-accent px-3 md:px-4 py-1 rounded-full text-[10px] md:text-xs font-bold border-2 border-catppuccin-accent/30 uppercase tracking-widest">{isDaily ? 'Daily' : 'Practice'} - {challenge.category}</span>
+                <div className={`text-lg md:text-xl font-mono font-bold ${timer < 10 ? 'text-red-500' : 'text-catppuccin-text-soft'}`}>00:{timer < 10 ? `0${timer}` : timer}</div>
               </div>
-              <h2 className="text-center text-catppuccin-text-soft mb-4 tracking-widest uppercase text-xs font-bold">{isInverse ? `Translate to ${challenge.language}` : 'Translate to English'}</h2>
-              <h1 className="text-center text-4xl md:text-5xl font-extrabold mb-12 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent">{isInverse ? challenge.english_word : challenge.translated_word}</h1>
-              {isInverse && challenge.meaning_hint && <p className="text-center text-catppuccin-text-soft italic mb-12 -mt-8">{challenge.meaning_hint}</p>}
+              <h2 className="text-center text-catppuccin-text-soft mb-4 tracking-widest uppercase text-[10px] font-bold">{isInverse ? `Translate to ${challenge.language}` : 'Translate to English'}</h2>
+              <h1 className="text-center text-3xl md:text-5xl font-extrabold mb-8 md:mb-12 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent break-words">{isInverse ? challenge.english_word : challenge.translated_word}</h1>
+              {isInverse && challenge.meaning_hint && <p className="text-center text-catppuccin-text-soft italic mb-8 md:mb-12 -mt-6 md:-mt-8 text-sm">{challenge.meaning_hint}</p>}
               <AnimatePresence>
                 {!result ? (
-                  <div className="flex gap-4">
-                    <input autoFocus value={answer} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && answer && submitAnswer()} placeholder={isInverse ? `Type in ${challenge.language}...` : "Type English translation..."} className="flex-1 bg-catppuccin-bg border-2 border-catppuccin-border rounded-2xl px-6 py-4 focus:ring-2 focus:ring-catppuccin-accent outline-none transition-all placeholder:text-catppuccin-text-soft/40" />
-                    <button onClick={submitAnswer} disabled={loading || !answer} className="bg-catppuccin-accent hover:brightness-110 p-4 rounded-2xl disabled:opacity-50 transition-all shadow-lg text-catppuccin-bg">{loading ? <Loader2 className="animate-spin" /> : <Send />}</button>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <input autoFocus value={answer} onChange={(e) => setAnswer(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && answer && submitAnswer()} placeholder={isInverse ? `Type in ${challenge.language}...` : "Type English translation..."} className="flex-1 bg-catppuccin-bg border-2 border-catppuccin-border rounded-2xl px-4 md:px-6 py-3 md:py-4 focus:ring-2 focus:ring-catppuccin-accent outline-none transition-all placeholder:text-catppuccin-text-soft/40 text-sm md:text-base" />
+                    <button onClick={submitAnswer} disabled={loading || !answer} className="bg-catppuccin-accent hover:brightness-110 p-3 md:p-4 rounded-2xl disabled:opacity-50 transition-all shadow-lg text-catppuccin-bg flex items-center justify-center">{loading ? <Loader2 className="animate-spin" /> : <Send />}</button>
                   </div>
                 ) : (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-                    <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full mb-6 font-bold border-2 ${result.is_correct ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'}`}>{result.is_correct ? <CheckCircle2 size={20} /> : <XCircle size={20} />}{result.is_correct ? 'Correct!' : 'Incorrect'}</div>
-                    <div className="mb-8"><p className="text-sm text-catppuccin-text-soft uppercase tracking-widest mb-1 font-bold">Accuracy Score</p><p className={`text-4xl font-black ${result.is_correct ? 'text-emerald-400' : 'text-red-400'}`}>{(result.score * 100).toFixed(0)}%</p></div>
-                    <div className="space-y-2 mb-8 bg-catppuccin-bg p-6 rounded-2xl border-2 border-catppuccin-border">
-                      <p className="text-xl font-bold text-catppuccin-text">Expected: <span className="text-catppuccin-accent-soft">{isInverse ? challenge.translated_word : result.expected}</span></p>
-                      <p className="text-sm font-bold text-catppuccin-text-soft uppercase tracking-wide">You said: <span className={result.is_correct ? "text-emerald-500/70" : "text-red-400/70"}>{answer}</span></p>
-                      <div className="text-catppuccin-text-soft italic text-sm leading-relaxed whitespace-pre-line">"{renderMarkdown(result.reason)}"</div>
+                    <div className={`inline-flex items-center gap-2 px-4 md:px-6 py-2 rounded-full mb-6 font-bold border-2 text-sm ${result.is_correct ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'}`}>{result.is_correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}{result.is_correct ? 'Correct!' : 'Incorrect'}</div>
+                    <div className="mb-6 md:mb-8"><p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest mb-1 font-bold">Accuracy Score</p><p className={`text-3xl md:text-4xl font-black ${result.is_correct ? 'text-emerald-400' : 'text-red-400'}`}>{(result.score * 100).toFixed(0)}%</p></div>
+                    <div className="space-y-2 mb-6 md:mb-8 bg-catppuccin-bg p-4 md:p-6 rounded-2xl border-2 border-catppuccin-border">
+                      <p className="text-lg md:text-xl font-bold text-catppuccin-text">Expected: <span className="text-catppuccin-accent-soft">{isInverse ? challenge.translated_word : result.expected}</span></p>
+                      <p className="text-xs md:text-sm font-bold text-catppuccin-text-soft uppercase tracking-wide">You said: <span className={result.is_correct ? "text-emerald-500/70" : "text-red-400/70"}>{answer}</span></p>
+                      <div className="text-catppuccin-text-soft italic text-xs md:text-sm leading-relaxed whitespace-pre-line mt-2">"{renderMarkdown(result.reason)}"</div>
                     </div>
-                    {result.earned && <div className="bg-catppuccin-accent-soft/10 border-2 border-catppuccin-accent-soft/20 p-4 rounded-2xl mb-8"><p className="text-catppuccin-accent-soft font-bold text-xl">+ {result.earned} Points!</p></div>}
-                    <button onClick={() => setChallenge(null)} className="bg-catppuccin-bg border-2 border-catppuccin-border hover:bg-catppuccin-bg-soft px-12 py-3 rounded-xl font-bold transition-all shadow-md">Finish</button>
+                    {result.earned && <div className="bg-catppuccin-accent-soft/10 border-2 border-catppuccin-accent-soft/20 p-3 md:p-4 rounded-2xl mb-6 md:mb-8"><p className="text-catppuccin-accent-soft font-bold text-lg md:text-xl">+ {result.earned} Points!</p></div>}
+                    <button onClick={() => setChallenge(null)} className="bg-catppuccin-bg border-2 border-catppuccin-border hover:bg-catppuccin-bg-soft px-8 md:px-12 py-2.5 md:py-3 rounded-xl font-bold transition-all shadow-md text-sm md:text-base">Finish</button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -482,22 +482,22 @@ const LangyPage = () => {
         initial={{ opacity: 0 }} 
         whileInView={{ opacity: 1 }} 
         viewport={{ once: true }} 
-        className="mt-20 bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] grid md:grid-cols-2 gap-12 text-catppuccin-text-soft shadow-xl shadow-black/10"
+        className="mt-12 md:mt-20 bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] grid md:grid-cols-2 gap-8 md:gap-12 text-catppuccin-text-soft shadow-xl shadow-black/10"
       >
         <div>
-          <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent">About Project</h4>
-          <p className="leading-relaxed mb-6 font-medium">Langy uses semantic embeddings and hierarchical linguistic analysis to understand the <em>meaning</em> behind your translations.</p>
+          <h4 className="text-xl md:text-2xl font-bold mb-4 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent">About Project</h4>
+          <p className="leading-relaxed mb-6 text-sm md:text-base font-medium">Langy uses semantic embeddings and hierarchical linguistic analysis to understand the <em>meaning</em> behind your translations.</p>
         </div>
         <div>
-          <h4 className="text-2xl font-bold mb-4 text-catppuccin-accent">Add to Discord</h4>
-          <p className="leading-relaxed mb-8 font-medium">Master new languages with your community! Add Langy for daily challenges and leaderboard tracking.</p>
+          <h4 className="text-xl md:text-2xl font-bold mb-4 text-catppuccin-accent">Add to Discord</h4>
+          <p className="leading-relaxed mb-6 md:mb-8 text-sm md:text-base font-medium">Master new languages with your community! Add Langy for daily challenges and leaderboard tracking.</p>
           <motion.a 
             whileHover={{ scale: 1.05, y: -2 }} 
             whileTap={{ scale: 0.95 }} 
             href={clientId ? `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=2147483648&scope=bot%20applications.commands` : "#"} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className={`inline-flex items-center gap-3 bg-catppuccin-accent hover:brightness-110 px-10 py-5 rounded-2xl font-black text-catppuccin-bg shadow-2xl shadow-catppuccin-accent/30 transition-all border-2 border-catppuccin-accent/20 ${!clientId ? 'opacity-50' : ''}`}
+            className={`inline-flex items-center justify-center gap-3 bg-catppuccin-accent hover:brightness-110 px-6 md:px-10 py-4 md:py-5 rounded-2xl font-black text-catppuccin-bg shadow-2xl shadow-catppuccin-accent/30 transition-all border-2 border-catppuccin-accent/20 w-full sm:w-auto ${!clientId ? 'opacity-50' : ''}`}
           >
             <Bot size={24} />{clientId ? 'Add Langy to Discord' : 'Loading...'}
           </motion.a>
@@ -509,22 +509,22 @@ const LangyPage = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="mt-12 bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-8 relative overflow-hidden shadow-lg shadow-black/10"
+        className="mt-8 md:mt-12 bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-2xl md:rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-lg shadow-black/10"
       >
         <div className="absolute top-0 right-0 p-8 opacity-5">
           <ShieldCheck size={120} />
         </div>
         
-        <h4 className="text-sm font-bold mb-8 flex items-center gap-2 text-catppuccin-text uppercase tracking-widest">
+        <h4 className="text-xs md:text-sm font-bold mb-8 flex items-center gap-2 text-catppuccin-text uppercase tracking-widest">
           <Lock size={16} className="text-catppuccin-accent" /> Privacy & Data Security
         </h4>
 
         <div className="grid md:grid-cols-3 gap-8 relative z-10">
           <div className="space-y-4">
-            <h5 className="font-bold flex items-center gap-2 text-catppuccin-text">
+            <h5 className="font-bold flex items-center gap-2 text-catppuccin-text text-sm md:text-base">
               <ShieldCheck size={18} className="text-catppuccin-accent" /> What we store
             </h5>
-            <ul className="text-xs text-catppuccin-text space-y-2 leading-relaxed font-medium">
+            <ul className="text-[10px] md:text-xs text-catppuccin-text space-y-2 leading-relaxed font-medium">
               <li>- <strong>Discord ID:</strong> To link your points to your account.</li>
               <li>- <strong>Username and Avatar:</strong> To display on the global leaderboard.</li>
               <li>- <strong>Game Stats:</strong> Your points, streaks, and timestamps.</li>
@@ -532,10 +532,10 @@ const LangyPage = () => {
           </div>
 
           <div className="space-y-4">
-            <h5 className="font-bold flex items-center gap-2 text-catppuccin-text">
+            <h5 className="font-bold flex items-center gap-2 text-catppuccin-text text-sm md:text-base">
               <EyeOff size={18} className="text-red-400" /> What we NEVER access
             </h5>
-            <ul className="text-xs text-catppuccin-text space-y-2 leading-relaxed font-medium">
+            <ul className="text-[10px] md:text-xs text-catppuccin-text space-y-2 leading-relaxed font-medium">
               <li>- Your <strong>Email Address</strong> is never requested.</li>
               <li>- Your <strong>Server List</strong> and private messages.</li>
               <li>- Any information not marked as 'Public' on Discord.</li>
@@ -543,10 +543,10 @@ const LangyPage = () => {
           </div>
 
           <div className="space-y-4">
-            <h5 className="font-bold flex items-center gap-2 text-catppuccin-text">
+            <h5 className="font-bold flex items-center gap-2 text-catppuccin-text text-sm md:text-base">
               <Lock size={18} className="text-catppuccin-accent-soft" /> Security
             </h5>
-            <p className="text-xs text-catppuccin-text font-medium leading-relaxed">
+            <p className="text-[10px] md:text-xs text-catppuccin-text font-medium leading-relaxed">
               Langy uses <strong>JSON Web Tokens (JWT)</strong> for secure session management. 
               Data is stored in a <strong>Supabase (PostgreSQL)</strong> database protected by 
               Row Level Security (RLS) to ensure data integrity.
