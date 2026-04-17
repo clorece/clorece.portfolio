@@ -17,11 +17,12 @@ const NodeBackground: React.FC = () => {
   const requestRef = useRef<number>();
 
   const RADIUS = 350; 
-  const BASE_OPACITY = 0.2;
-  const ENHANCED_OPACITY = 0.7;
-  const BASE_LINE_WIDTH = 0.8;
-  const ENHANCED_LINE_WIDTH = 2.2;
-  const MAX_CONNECT_DISTANCE = 300;
+  const BASE_OPACITY = 0.35;
+  const ENHANCED_OPACITY = 0.9;
+  const BASE_LINE_WIDTH = 1.2;
+  const ENHANCED_LINE_WIDTH = 3.0;
+  const MAX_CONNECT_DISTANCE = 320;
+  const FADE_START_THRESHOLD = 250; // Distance at which lines start to fade out
 
   const initNodes = (width: number, height: number) => {
     const nodes: Node[] = [];
@@ -33,11 +34,20 @@ const NodeBackground: React.FC = () => {
         vx: (Math.random() - 0.5) * 0.15,
         vy: (Math.random() - 0.5) * 0.15,
         z: Math.random() * 2 + 1,
-        baseSize: Math.random() * 1.5 + 1.2,
+        baseSize: Math.random() * 1.8 + 1.5,
         colorMix: Math.random(),
       });
     }
     nodesRef.current = nodes;
+  };
+
+  const saturateRGB = (r: number, g: number, b: number, factor: number = 1.2) => {
+    const avg = (r + g + b) / 3;
+    return [
+      Math.min(255, Math.max(0, Math.round(avg + (r - avg) * factor))),
+      Math.min(255, Math.max(0, Math.round(avg + (g - avg) * factor))),
+      Math.min(255, Math.max(0, Math.round(avg + (b - avg) * factor)))
+    ];
   };
 
   const getInterpolatedColor = (r1: number, g1: number, b1: number, r2: number, g2: number, b2: number, mix: number, alpha: number) => {
@@ -52,8 +62,11 @@ const NodeBackground: React.FC = () => {
     context.clearRect(0, 0, width, height);
 
     const style = getComputedStyle(document.documentElement);
-    const pRGB = style.getPropertyValue('--accent-primary-rgb').split(',').map(Number);
-    const sRGB = style.getPropertyValue('--accent-secondary-rgb').split(',').map(Number);
+    let pRGB = style.getPropertyValue('--accent-primary-rgb').split(',').map(Number);
+    let sRGB = style.getPropertyValue('--accent-secondary-rgb').split(',').map(Number);
+
+    pRGB = saturateRGB(pRGB[0], pRGB[1], pRGB[2], 1.4);
+    sRGB = saturateRGB(sRGB[0], sRGB[1], sRGB[2], 1.4);
 
     const nodes = nodesRef.current;
     const mouse = mouseRef.current;
@@ -84,12 +97,23 @@ const NodeBackground: React.FC = () => {
       const factor = Math.max(0, 1 - distMouse / RADIUS);
       
       const opacity = BASE_OPACITY + (ENHANCED_OPACITY - BASE_OPACITY) * factor;
-      const size = nodeI.n.baseSize * (1 + factor);
+      const size = nodeI.n.baseSize * (1 + factor * 0.5);
 
-      context.fillStyle = getInterpolatedColor(pRGB[0], pRGB[1], pRGB[2], sRGB[0], sRGB[1], sRGB[2], nodeI.n.colorMix, opacity);
+      const color = getInterpolatedColor(pRGB[0], pRGB[1], pRGB[2], sRGB[0], sRGB[1], sRGB[2], nodeI.n.colorMix, opacity);
+      
+      context.fillStyle = color;
+      
+      if (factor > 0.5) {
+        context.shadowBlur = 10 * factor;
+        context.shadowColor = color;
+      } else {
+        context.shadowBlur = 0;
+      }
+
       context.beginPath();
       context.arc(nodeI.rx, nodeI.ry, size, 0, Math.PI * 2);
       context.fill();
+      context.shadowBlur = 0;
 
       const distances = [];
       for (let j = 0; j < renderedNodes.length; j++) {
@@ -118,16 +142,26 @@ const NodeBackground: React.FC = () => {
           const avgFactor = (factor + mFactor) / 2;
           const avgColorMix = (nodeI.n.colorMix + nodeJ.n.colorMix) / 2;
           
-          const lineOpacity = (BASE_OPACITY * 0.4) + (ENHANCED_OPACITY * 0.5 - BASE_OPACITY * 0.4) * avgFactor;
+          const lineOpacity = (BASE_OPACITY * 0.6) + (ENHANCED_OPACITY * 0.65 - BASE_OPACITY * 0.6) * avgFactor;
           const lineWidth = BASE_LINE_WIDTH + (ENHANCED_LINE_WIDTH - BASE_LINE_WIDTH) * avgFactor;
 
-          const distanceFade = 1 - (distActual / MAX_CONNECT_DISTANCE);
-          context.strokeStyle = getInterpolatedColor(pRGB[0], pRGB[1], pRGB[2], sRGB[0], sRGB[1], sRGB[2], avgColorMix, lineOpacity * distanceFade);
-          context.lineWidth = lineWidth;
-          context.beginPath();
-          context.moveTo(nodeI.rx, nodeI.ry);
-          context.lineTo(nodeJ.rx, nodeJ.ry);
-          context.stroke();
+          // SMOOTH TRANSITION: Calculate fade based on distance
+          // Line is full strength up to FADE_START_THRESHOLD, then fades out to MAX_CONNECT_DISTANCE
+          let distanceFade = 1.0;
+          if (distActual > FADE_START_THRESHOLD) {
+            distanceFade = 1 - (distActual - FADE_START_THRESHOLD) / (MAX_CONNECT_DISTANCE - FADE_START_THRESHOLD);
+          }
+          
+          const finalOpacity = lineOpacity * distanceFade;
+          
+          if (finalOpacity > 0.01) {
+            context.strokeStyle = getInterpolatedColor(pRGB[0], pRGB[1], pRGB[2], sRGB[0], sRGB[1], sRGB[2], avgColorMix, finalOpacity);
+            context.lineWidth = lineWidth;
+            context.beginPath();
+            context.moveTo(nodeI.rx, nodeI.ry);
+            context.lineTo(nodeJ.rx, nodeJ.ry);
+            context.stroke();
+          }
         }
       }
     }
