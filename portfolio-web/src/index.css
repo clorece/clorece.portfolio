@@ -4,11 +4,11 @@
 
 /* 
   Catppuccin Latte (Light) 
-  Darker background for tiles
+  Deeper darker backgrounds for tiles
 */
 :root {
-  --bg-primary: #e6e9ef;     /* Mantle (Slightly darker than Base) */
-  --bg-secondary: #dce0e8;   /* Crust (Even darker) */
+  --bg-primary: #dce0e8;     /* Crust (Darkest Latte shade) */
+  --bg-secondary: #ccd0da;   /* Surface0 (Slightly darker Mantle) */
   --text-primary: #4c4f69;   /* Text */
   --text-secondary: #6c6f85; /* Subtext0 */
   --accent-primary: #dc8a78; /* Rosewater */
@@ -22,11 +22,11 @@
 
 /* 
   Catppuccin Macchiato (Dark) 
-  Darker background for tiles
+  Deeper darker backgrounds for tiles
 */
 .dark {
-  --bg-primary: #1e2030;     /* Mantle (Darker than Base) */
-  --bg-secondary: #181926;   /* Crust (Deepest) */
+  --bg-primary: #181926;     /* Crust (Darkest Macchiato shade) */
+  --bg-secondary: #11111b;   /* Custom Deep Mantle */
   --text-primary: #cad3f5;   /* Text */
   --text-secondary: #a5adcb; /* Subtext0 */
   --accent-primary: #f4dbd6; /* Rosewater */
@@ -39,8 +39,12 @@
 }
 
 body {
-  @apply bg-catppuccin-bg text-catppuccin-text transition-colors duration-300;
+  @apply bg-[#1e1e2e] text-catppuccin-text transition-colors duration-300;
   font-family: 'JetBrains Mono', monospace;
+}
+
+.dark body {
+  @apply bg-[#11111b];
 }
 
 .custom-scrollbar::-webkit-scrollbar {
