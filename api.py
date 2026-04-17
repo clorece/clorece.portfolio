@@ -244,8 +244,11 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
                         result.update({"error": "Daily already completed today."})
             else:
                 if is_daily:
-                    total, streak = database.fail_daily(user_id, username, avatar)
-                    result.update({"total": total, "streak": streak})
+                    if database.can_do_daily(user_id):
+                        total, streak = database.fail_daily(user_id, username, avatar)
+                        result.update({"total": total, "streak": streak})
+                    else:
+                        result.update({"error": "Daily already completed today. Streak not affected."})
         except Exception as e:
             print(f"[ERROR] Database error during grading: {e}")
             result.update({"error": "Database error: Points/streak could not be updated."})

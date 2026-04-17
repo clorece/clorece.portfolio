@@ -182,18 +182,26 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
         
         if is_correct:
             if is_daily:
-                base_points = 15 if category == "Word" else 30
-                earned, total, streak = database.reward_daily(str(user_id), base_points)
-                res_desc = f"**Passed! (Success)**\nAccuracy Score: **{score:.2f}**\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n**You earned {earned} Points!** (x{streak} streak multiplier)\n**Total Score: {total}**"
-                color = discord.Color.green()
+                if database.can_do_daily(str(user_id)):
+                    base_points = 15 if category == "Word" else 30
+                    earned, total, streak = database.reward_daily(str(user_id), base_points)
+                    res_desc = f"**Passed! (Success)**\nAccuracy Score: **{score:.2f}**\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n**You earned {earned} Points!** (x{streak} streak multiplier)\n**Total Score: {total}**"
+                    color = discord.Color.green()
+                else:
+                    res_desc = f"**Passed! (Success)**\nAccuracy Score: **{score:.2f}**\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n*Note: You've already completed a daily today, so no additional points were awarded.*"
+                    color = discord.Color.blue()
             else:
                 res_desc = f"**Passed! (Success)**\nAccuracy Score: **{score:.2f}**\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n*(This was practice, so points weren't affected.)*"
                 color = discord.Color.green()
         else:
             if is_daily:
-                total, streak = database.fail_daily(str(user_id))
-                res_desc = f"**Incorrect. (Failed)**\nAccuracy Score: **{score:.2f}** (Failed)\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\nYour multiplier streak was reset to x1. Current Total: {total}."
-                color = discord.Color.red()
+                if database.can_do_daily(str(user_id)):
+                    total, streak = database.fail_daily(str(user_id))
+                    res_desc = f"**Incorrect. (Failed)**\nAccuracy Score: **{score:.2f}** (Failed)\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\nYour multiplier streak was reset to x1. Current Total: {total}."
+                    color = discord.Color.red()
+                else:
+                    res_desc = f"**Incorrect. (Failed)**\nAccuracy Score: **{score:.2f}** (Failed)\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**.\n\n*Note: You've already completed a daily today, so your streak was not affected.*"
+                    color = discord.Color.orange()
             else:
                 res_desc = f"**Incorrect. (Failed)**\nAccuracy Score: **{score:.2f}** (Failed)\nReasoning: {reason}\n\nThe expected answer was **{english_word if not is_inverse else translated_word}**."
                 color = discord.Color.red()
