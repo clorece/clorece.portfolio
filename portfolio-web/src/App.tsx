@@ -214,7 +214,7 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
 
   const fetchUserStats = async () => {
     try {
-      const res = await fetch(`${API_BASE}/user/stats`, {
+      const res = await fetch(`${API_BASE}/user/stats?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -409,8 +409,14 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
                 <div className="space-y-3">
                   <p className="text-[10px] md:text-xs text-catppuccin-text uppercase tracking-widest font-bold">2. Difficulty</p>
                   <div className="flex gap-2">
-                    <button onClick={() => setCategory('Word')} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${category === 'Word' ? 'bg-catppuccin-accent-soft text-catppuccin-bg border-catppuccin-accent-soft' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Word</button>
-                    <button onClick={() => setCategory('Sentence')} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${category === 'Sentence' ? 'bg-catppuccin-accent-soft text-catppuccin-bg border-catppuccin-accent-soft' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Sentence</button>
+                    <button onClick={() => setCategory('Word')} className={`flex-1 py-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center ${category === 'Word' ? 'bg-catppuccin-accent-soft text-catppuccin-bg border-catppuccin-accent-soft' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>
+                      <span className="text-sm font-bold">Word</span>
+                      {user && <span className={`text-[10px] opacity-80 ${category === 'Word' ? 'text-catppuccin-bg' : 'text-catppuccin-accent-soft'}`}>15pts {user.multiplier > 1 && `(x${user.multiplier} = ${15 * user.multiplier})`}</span>}
+                    </button>
+                    <button onClick={() => setCategory('Sentence')} className={`flex-1 py-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center ${category === 'Sentence' ? 'bg-catppuccin-accent-soft text-catppuccin-bg border-catppuccin-accent-soft' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>
+                      <span className="text-sm font-bold">Sentence</span>
+                      {user && <span className={`text-[10px] opacity-80 ${category === 'Sentence' ? 'text-catppuccin-bg' : 'text-catppuccin-accent-soft'}`}>30pts {user.multiplier > 1 && `(x${user.multiplier} = ${30 * user.multiplier})`}</span>}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -436,6 +442,10 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
                 <button onClick={() => startChallenge('practice')} disabled={loading} className="flex-1 bg-catppuccin-bg border-2 border-catppuccin-border hover:bg-catppuccin-bg-soft py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50">Practice Only</button>
                 {!token ? (
                   <a href={`${API_BASE}/auth/login`} className="flex-1 bg-[#5865F2] hover:brightness-110 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-xl text-white"><LogIn size={20} /> Login for Daily</a>
+                ) : !user ? (
+                  <div className="flex-1 bg-catppuccin-bg border-2 border-catppuccin-border py-4 rounded-2xl flex items-center justify-center">
+                    <Loader2 className="animate-spin text-catppuccin-accent" size={24} />
+                  </div>
                 ) : user?.can_do_daily ? (
                   <button onClick={() => startChallenge('daily')} disabled={loading} className="flex-1 bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft hover:brightness-110 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50 text-catppuccin-bg"><Trophy size={18} /> Launch Daily</button>
                 ) : (

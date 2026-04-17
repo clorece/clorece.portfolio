@@ -207,7 +207,10 @@ def can_do_daily(user_id: str) -> bool:
     # Consistent EST check
     tz_est = datetime.timezone(datetime.timedelta(hours=-4))
     now_est = datetime.datetime.now(tz_est).date()
-    return datetime.datetime.fromisoformat(last_daily_date).date() < now_est
+    last_date = datetime.datetime.fromisoformat(last_daily_date).date()
+    res = last_date < now_est
+    print(f"[DEBUG] User {user_id} can_do_daily: {res} (Last: {last_date}, Now: {now_est})")
+    return res
 
 def get_leaderboard(limit: int = 10) -> List[Tuple[str, int, int, str, str]]:
     if not connection_pool: return []
