@@ -31,10 +31,10 @@ def init_db():
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT")
             c.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT")
             
-            # ONE-TIME RESET: Clear all users' last_daily_date to re-enable daily challenges.
-            # >>> REMOVE THIS AFTER FIRST DEPLOY <<<
-            c.execute("UPDATE users SET last_daily_date = NULL")
-            print("[RESET] All users' last_daily_date has been cleared.")
+            # [DAILY RESET] Uncomment the line below to reset all users' daily dates on next deploy.
+            # After deploy, comment it back out.
+            #c.execute("UPDATE users SET last_daily_date = NULL")
+            #print("[RESET] All users' last_daily_date has been cleared.")
 
             # Enable RLS as per Supabase security recommendations
             try:
