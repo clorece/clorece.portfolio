@@ -7,24 +7,25 @@ interface Node {
   vy: number;
   z: number; // Depth for parallax
   baseSize: number;
+  colorMix: number; // Random value between 0 and 1 for color interpolation
 }
 
 const NodeBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: -1000, y: -1000 }); // Start far away
+  const mouseRef = useRef({ x: -1000, y: -1000 });
   const nodesRef = useRef<Node[]>([]);
   const requestRef = useRef<number>();
 
-  const RADIUS = 350; // Visibility radius around mouse
-  const BASE_OPACITY = 0.15;
-  const ENHANCED_OPACITY = 0.6;
+  const RADIUS = 350; 
+  const BASE_OPACITY = 0.2;
+  const ENHANCED_OPACITY = 0.7;
   const BASE_LINE_WIDTH = 0.8;
   const ENHANCED_LINE_WIDTH = 2.2;
-  const MAX_CONNECT_DISTANCE = 300; // Increased to allow long-distance connectivity
+  const MAX_CONNECT_DISTANCE = 300;
 
   const initNodes = (width: number, height: number) => {
     const nodes: Node[] = [];
-    const count = 180; // Slightly reduced for better performance with N-NN approach
+    const count = 180;
     for (let i = 0; i < count; i++) {
       nodes.push({
         x: Math.random() * width,
@@ -33,26 +34,33 @@ const NodeBackground: React.FC = () => {
         vy: (Math.random() - 0.5) * 0.15,
         z: Math.random() * 2 + 1,
         baseSize: Math.random() * 1.5 + 1.2,
+        colorMix: Math.random(),
       });
     }
     nodesRef.current = nodes;
+  };
+
+  const getInterpolatedColor = (r1: number, g1: number, b1: number, r2: number, g2: number, b2: number, mix: number, alpha: number) => {
+    const r = Math.round(r1 + (r2 - r1) * mix);
+    const g = Math.round(g1 + (g2 - g1) * mix);
+    const b = Math.round(b1 + (b2 - b1) * mix);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
   const draw = (ctx: HTMLCanvasElement, context: CanvasRenderingContext2D) => {
     const { width, height } = ctx;
     context.clearRect(0, 0, width, height);
 
-    const nodeColorRaw = getComputedStyle(document.documentElement).getPropertyValue('--node-color').trim();
-    const lineColorRaw = getComputedStyle(document.documentElement).getPropertyValue('--line-color').trim();
+    const style = getComputedStyle(document.documentElement);
+    const pRGB = style.getPropertyValue('--accent-primary-rgb').split(',').map(Number);
+    const sRGB = style.getPropertyValue('--accent-secondary-rgb').split(',').map(Number);
 
     const nodes = nodesRef.current;
     const mouse = mouseRef.current;
 
-    // First, update all node positions and calculate render coordinates
     const renderedNodes = nodes.map(n => {
       n.x += n.vx;
       n.y += n.vy;
-
       if (n.x < 0) n.x = width;
       if (n.x > width) n.x = 0;
       if (n.y < 0) n.y = height;
@@ -68,7 +76,6 @@ const NodeBackground: React.FC = () => {
       };
     });
 
-    // Draw nodes and their connections
     for (let i = 0; i < renderedNodes.length; i++) {
       const nodeI = renderedNodes[i];
       const dxMouse = nodeI.rx - mouse.x;
@@ -79,31 +86,24 @@ const NodeBackground: React.FC = () => {
       const opacity = BASE_OPACITY + (ENHANCED_OPACITY - BASE_OPACITY) * factor;
       const size = nodeI.n.baseSize * (1 + factor);
 
-      context.globalAlpha = opacity;
-      context.fillStyle = nodeColorRaw;
+      context.fillStyle = getInterpolatedColor(pRGB[0], pRGB[1], pRGB[2], sRGB[0], sRGB[1], sRGB[2], nodeI.n.colorMix, opacity);
       context.beginPath();
       context.arc(nodeI.rx, nodeI.ry, size, 0, Math.PI * 2);
       context.fill();
 
-      // "All nodes connected" logic:
-      // Find the nearest neighbors for each node to ensure no isolated groups.
-      // We'll calculate distances to all other nodes and take the top 3 nearest.
       const distances = [];
       for (let j = 0; j < renderedNodes.length; j++) {
         if (i === j) continue;
         const nodeJ = renderedNodes[j];
         const dx = nodeI.rx - nodeJ.rx;
         const dy = nodeI.ry - nodeJ.ry;
-        const dist = dx * dx + dy * dy; // Squared distance for performance
-        distances.push({ index: j, dist: dist });
+        distances.push({ index: j, dist: dx * dx + dy * dy });
       }
 
-      // Sort by distance and take nearest 3
       distances.sort((a, b) => a.dist - b.dist);
       const nearest = distances.slice(0, 3);
 
       for (const neighbor of nearest) {
-        // Optimization: Only draw if i < neighbor.index to avoid double drawing
         if (i > neighbor.index) continue;
 
         const nodeJ = renderedNodes[neighbor.index];
@@ -116,14 +116,13 @@ const NodeBackground: React.FC = () => {
           
           const mFactor = Math.max(0, 1 - mDistMouse / RADIUS);
           const avgFactor = (factor + mFactor) / 2;
+          const avgColorMix = (nodeI.n.colorMix + nodeJ.n.colorMix) / 2;
           
           const lineOpacity = (BASE_OPACITY * 0.4) + (ENHANCED_OPACITY * 0.5 - BASE_OPACITY * 0.4) * avgFactor;
           const lineWidth = BASE_LINE_WIDTH + (ENHANCED_LINE_WIDTH - BASE_LINE_WIDTH) * avgFactor;
 
-          // Fade line out as it reaches the MAX_CONNECT_DISTANCE
           const distanceFade = 1 - (distActual / MAX_CONNECT_DISTANCE);
-          context.globalAlpha = lineOpacity * distanceFade;
-          context.strokeStyle = lineColorRaw;
+          context.strokeStyle = getInterpolatedColor(pRGB[0], pRGB[1], pRGB[2], sRGB[0], sRGB[1], sRGB[2], avgColorMix, lineOpacity * distanceFade);
           context.lineWidth = lineWidth;
           context.beginPath();
           context.moveTo(nodeI.rx, nodeI.ry);
@@ -132,7 +131,6 @@ const NodeBackground: React.FC = () => {
         }
       }
     }
-    context.globalAlpha = 1.0;
 
     requestRef.current = requestAnimationFrame(() => draw(ctx, context));
   };

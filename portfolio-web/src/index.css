@@ -4,7 +4,6 @@
 
 /* 
   Catppuccin Latte (Light) 
-  Refined to use specific Surface colors for better border visibility
 */
 :root {
   --bg-primary: #eff1f5;     /* Base */
@@ -13,14 +12,15 @@
   --text-secondary: #6c6f85; /* Subtext0 */
   --accent-primary: #dc8a78; /* Rosewater */
   --accent-secondary: #7287fd; /* Lavender */
-  --border-color: #acb0be;   /* Surface2 (Higher contrast for tiles) */
-  --node-color: rgba(92, 95, 119, 0.65);  /* Subtext1 */
-  --line-color: rgba(92, 95, 119, 0.4);   /* Subtext1 */
+  --accent-primary-rgb: 220, 138, 120;
+  --accent-secondary-rgb: 114, 135, 253;
+  --border-color: #acb0be;   /* Surface2 */
+  --node-color: rgba(92, 95, 119, 0.65);
+  --line-color: rgba(92, 95, 119, 0.4);
 }
 
 /* 
   Catppuccin Macchiato (Dark) 
-  Refined for depth and visibility
 */
 .dark {
   --bg-primary: #24273a;     /* Base */
@@ -29,9 +29,11 @@
   --text-secondary: #a5adcb; /* Subtext0 */
   --accent-primary: #f4dbd6; /* Rosewater */
   --accent-secondary: #b7bdf8; /* Lavender */
-  --border-color: #5b6078;   /* Surface2 (Crisp borders for dark mode) */
-  --node-color: rgba(184, 192, 224, 0.65); /* Subtext1 */
-  --line-color: rgba(184, 192, 224, 0.4);  /* Subtext1 */
+  --accent-primary-rgb: 244, 219, 214;
+  --accent-secondary-rgb: 183, 189, 248;
+  --border-color: #5b6078;   /* Surface2 */
+  --node-color: rgba(184, 192, 224, 0.65);
+  --line-color: rgba(184, 192, 224, 0.4);
 }
 
 body {
