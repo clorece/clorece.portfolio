@@ -96,6 +96,19 @@ def get_user(user_id: str) -> Tuple[int, int, Optional[str]]:
     finally:
         if conn: connection_pool.putconn(conn)
 
+def get_user_rank(user_id: str) -> int:
+    """Returns the user's rank (1-indexed) based on points. Returns 0 if user not found."""
+    if not connection_pool: return 0
+    conn = None
+    try:
+        conn = connection_pool.getconn()
+        with conn.cursor() as c:
+            c.execute('SELECT COUNT(*) + 1 FROM users WHERE points > (SELECT COALESCE((SELECT points FROM users WHERE user_id = %s), 0))', (str(user_id),))
+            row = c.fetchone()
+            return row[0] if row else 0
+    finally:
+        if conn: connection_pool.putconn(conn)
+
 def evaluate_multiplier(multiplier: int, last_daily_date: Optional[str]) -> int:
     if not last_daily_date: return 1
     try:

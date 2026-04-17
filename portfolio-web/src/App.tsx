@@ -345,7 +345,7 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
             )}
             <div className="min-w-0">
               <h3 className="font-bold text-lg md:text-xl truncate">{user?.username}</h3>
-              <p className="text-xs md:text-sm text-catppuccin-text-soft">Level: Language Learner</p>
+              <p className="text-xs md:text-sm text-catppuccin-accent-soft font-bold">Rank #{user?.rank || '—'}</p>
             </div>
           </div>
           <div className="flex flex-wrap md:flex-nowrap gap-4 md:gap-8 items-center justify-center w-full lg:w-auto">
@@ -411,8 +411,14 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
                 <div className="space-y-3">
                   <p className="text-[10px] md:text-xs text-catppuccin-text uppercase tracking-widest font-bold">1. Mode</p>
                   <div className="flex gap-2">
-                    <button onClick={() => setIsInverse(false)} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${!isInverse ? 'bg-catppuccin-accent text-catppuccin-bg border-catppuccin-accent' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Standard</button>
-                    <button onClick={() => setIsInverse(true)} className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold transition-all ${isInverse ? 'bg-catppuccin-accent text-catppuccin-bg border-catppuccin-accent' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>Inverse</button>
+                    <button onClick={() => setIsInverse(false)} className={`flex-1 py-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center ${!isInverse ? 'bg-catppuccin-accent text-catppuccin-bg border-catppuccin-accent' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>
+                      <span className="text-sm font-bold">Standard</span>
+                      <span className={`text-[10px] opacity-80 ${!isInverse ? 'text-catppuccin-bg' : 'text-catppuccin-text-soft'}`}>Native → English</span>
+                    </button>
+                    <button onClick={() => setIsInverse(true)} className={`flex-1 py-3 rounded-xl border-2 transition-all flex flex-col items-center justify-center ${isInverse ? 'bg-catppuccin-accent text-catppuccin-bg border-catppuccin-accent' : 'bg-catppuccin-bg border-catppuccin-border hover:bg-catppuccin-bg-soft text-catppuccin-text'}`}>
+                      <span className="text-sm font-bold">Inverse</span>
+                      <span className={`text-[10px] opacity-80 ${isInverse ? 'text-catppuccin-bg' : 'text-catppuccin-text-soft'}`}>English → Native</span>
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-3">
