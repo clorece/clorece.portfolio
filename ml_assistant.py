@@ -159,6 +159,17 @@ async def process_user_input_and_grade(language: str, original_english: str, use
     Advanced Grading Logic with Language-Specific Dictionary Bias.
     Now includes Direct Synonym Matching for Inverse Mode.
     """
+    from accuracy.utils import normalize_for_grading
+    
+    # 0. Early Exact Match — If the user typed the exact expected answer, skip the ML pipeline entirely.
+    if normalize_for_grading(user_input) == normalize_for_grading(original_english):
+        tool = lt_registry.get_tool(language)
+        dict_results = await tool.lookup_word(user_input, language=language)
+        dict_found = dict_results.get("found", False)
+        tool_name = tool.get_tool_name(language=language) if dict_found else None
+        prefix = f"✅ **Verified by {tool_name}**\n" if tool_name else ""
+        return True, 1.0, prefix + f"Perfect! **{user_input.lower()}** is exactly what I was looking for."
+
     # 1. Dictionary Verification (Expert Layer)
     tool = lt_registry.get_tool(language)
     dict_results = await tool.lookup_word(user_input, language=language)
@@ -173,6 +184,12 @@ async def process_user_input_and_grade(language: str, original_english: str, use
 
     # 2. Translation (MT Layer)
     user_english_guess = await translate_text(user_input, source=language.lower())
+    
+    # 2b. Post-translation exact match — if Google Translate confirms the answer matches, it's 100%.
+    if normalize_for_grading(user_english_guess) == normalize_for_grading(original_english):
+        tool_name = tool.get_tool_name(language=language) if dict_found else None
+        prefix = f"✅ **Verified by {tool_name}**\n" if tool_name else ""
+        return True, 1.0, prefix + f"Perfect! **{user_input.lower()}** is exactly what I was looking for."
         
     # 3. Core Metrics
     semantic_score = accuracy.get_semantic_score(original_english, user_english_guess)
