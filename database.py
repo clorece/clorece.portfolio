@@ -95,8 +95,9 @@ def evaluate_multiplier(multiplier: int, last_daily_date: Optional[str]) -> int:
     if not last_daily_date: return 1
     try:
         last_date_obj = datetime.datetime.fromisoformat(last_daily_date).date()
-        # Use UTC for consistent reset across all users
-        now_date_obj = datetime.datetime.now(datetime.timezone.utc).date()
+        # Use EST (UTC-5) for consistent reset at 12am EST
+        tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+        now_date_obj = datetime.datetime.now(tz_est).date()
         diff = (now_date_obj - last_date_obj).days
         if diff == 1: return min(multiplier + 1, 7)
         elif diff == 0: return multiplier
@@ -137,7 +138,8 @@ def get_leaderboard_cached():
     }
 
 def reward_daily(user_id: str, base_points: int, username: str = None, avatar: str = None) -> Tuple[int, int, int]:
-    now_date = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+    now_date = datetime.datetime.now(tz_est).date().isoformat()
     points, multiplier, last_daily_date = get_user(user_id)
     new_multiplier = evaluate_multiplier(multiplier, last_daily_date)
     points_earned = base_points * new_multiplier
@@ -170,7 +172,8 @@ def reward_daily(user_id: str, base_points: int, username: str = None, avatar: s
         if conn: connection_pool.putconn(conn)
 
 def fail_daily(user_id: str, username: str = None, avatar: str = None) -> Tuple[int, int]:
-    now_date = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+    now_date = datetime.datetime.now(tz_est).date().isoformat()
     points, multiplier, last_daily_date = get_user(user_id)
     
     if not connection_pool: 
@@ -201,9 +204,10 @@ def fail_daily(user_id: str, username: str = None, avatar: str = None) -> Tuple[
 def can_do_daily(user_id: str) -> bool:
     _, _, last_daily_date = get_user(user_id)
     if not last_daily_date: return True
-    # Consistent UTC check
-    now_utc = datetime.datetime.now(datetime.timezone.utc).date()
-    return datetime.datetime.fromisoformat(last_daily_date).date() < now_utc
+    # Consistent EST check
+    tz_est = datetime.timezone(datetime.timedelta(hours=-5))
+    now_est = datetime.datetime.now(tz_est).date()
+    return datetime.datetime.fromisoformat(last_daily_date).date() < now_est
 
 def get_leaderboard(limit: int = 10) -> List[Tuple[str, int, int, str, str]]:
     if not connection_pool: return []

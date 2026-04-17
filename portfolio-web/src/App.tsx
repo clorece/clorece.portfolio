@@ -23,8 +23,8 @@ const renderMarkdown = (text: string) => {
   });
 };
 
-const Navbar = ({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) => (
-  <nav className="fixed top-0 w-full z-50 bg-catppuccin-bg/95 backdrop-blur-md border-b border-catppuccin-border">
+const Navbar = ({ isDark, toggleTheme, isGlass, toggleGlass }: { isDark: boolean; toggleTheme: () => void; isGlass: boolean; toggleGlass: () => void }) => (
+  <nav className={`fixed top-0 w-full z-50 ${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-b border-catppuccin-border transition-all`}>
     <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       <Link to="/" className="text-lg md:text-xl font-bold bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft bg-clip-text text-transparent">
         MyPortfolio
@@ -34,23 +34,33 @@ const Navbar = ({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => v
         <Link to="/langy" className="hover:text-catppuccin-accent-soft transition-colors flex items-center gap-1 text-xs md:text-sm font-medium">
           <Languages size={14} className="md:w-4 md:h-4" /> Langy
         </Link>
-        <button 
-          onClick={toggleTheme}
-          className="p-1.5 md:p-2 rounded-full hover:bg-catppuccin-bg-soft transition-colors text-catppuccin-accent border border-catppuccin-border"
-        >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={toggleGlass}
+            className="hidden md:flex p-2 rounded-full hover:bg-catppuccin-bg-soft transition-colors text-catppuccin-accent border border-catppuccin-border items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-3"
+            title="Toggle Glass Effect"
+          >
+            {isGlass ? <ShieldCheck size={16} /> : <EyeOff size={16} />} 
+            Glass
+          </button>
+          <button 
+            onClick={toggleTheme}
+            className="p-1.5 md:p-2 rounded-full hover:bg-catppuccin-bg-soft transition-colors text-catppuccin-accent border border-catppuccin-border"
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
       </div>
     </div>
   </nav>
 )
 
-const Hero = () => (
+const Hero = ({ isGlass }: { isGlass: boolean }) => (
   <section className="pt-24 md:pt-32 pb-10 md:pb-20 px-4 text-center max-w-4xl mx-auto">
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-2xl shadow-black/20"
+      className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-2xl shadow-black/20 transition-all`}
     >
       <motion.h1 
         initial={{ opacity: 0, y: 20 }}
@@ -90,9 +100,9 @@ const ProjectCard = ({ title, description, tags, link }: any) => (
   </div>
 )
 
-const Projects = () => (
+const Projects = ({ isGlass }: { isGlass: boolean }) => (
   <section id="projects" className="py-20 max-w-7xl mx-auto px-4">
-    <div className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-xl shadow-black/10">
+    <div className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-xl shadow-black/10 transition-all`}>
       <h2 className="text-3xl font-bold mb-12">Featured Projects</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <ProjectCard 
@@ -154,9 +164,16 @@ const LangyPage = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date()
-      // Calculate time until next UTC midnight
-      const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0))
-      const diff = midnight.getTime() - now.getTime()
+      // EST is UTC-5
+      const estOffset = -5 * 60; // in minutes
+      // Get current time in EST
+      const nowEst = new Date(now.getTime() + (now.getTimezoneOffset() + estOffset) * 60000);
+      
+      // Calculate next midnight in EST
+      const midnightEst = new Date(nowEst);
+      midnightEst.setHours(24, 0, 0, 0);
+      
+      const diff = midnightEst.getTime() - nowEst.getTime();
       
       const hours = Math.floor(diff / (1000 * 60 * 60))
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
@@ -255,7 +272,15 @@ const LangyPage = () => {
     setAnswer('')
     setTimer(60)
     try {
-      const res = await fetch(`${API_BASE}/challenge?language=${selectedLanguage}&category=${category}`)
+      const res = await fetch(`${API_BASE}/challenge?language=${selectedLanguage}&category=${category}&is_daily=${type === 'daily'}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.detail || "Failed to start challenge")
+        setLoading(false)
+        return
+      }
       const data = await res.json()
       setChallenge(data)
     } catch (e) { alert("Failed to start challenge") }
@@ -562,9 +587,9 @@ const LangyPage = () => {
   )
 }
 
-const Footer = () => {
+const Footer = ({ isGlass }: { isGlass: boolean }) => {
   return (
-    <footer id="global-footer" className="relative z-50 mt-auto py-8 px-6 border-t-2 border-catppuccin-border bg-catppuccin-bg/95 backdrop-blur-2xl">
+    <footer id="global-footer" className={`relative z-50 mt-auto py-8 px-6 border-t-2 border-catppuccin-border ${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-2xl' : 'bg-catppuccin-bg'} transition-all`}>
       <div className="max-w-6xl mx-auto flex justify-center">
         <p className="text-[10px] text-catppuccin-text-soft font-bold tracking-[0.2em] uppercase">
           © {new Date().getFullYear()} Clorece Portfolio
@@ -580,6 +605,11 @@ function App() {
     return saved ? saved === 'dark' : true;
   });
 
+  const [isGlass, setIsGlass] = useState(() => {
+    const saved = localStorage.getItem('glass_effect');
+    return saved ? saved === 'true' : false; // Default to off
+  });
+
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -590,17 +620,26 @@ function App() {
     }
   }, [isDark]);
 
+  useEffect(() => {
+    localStorage.setItem('glass_effect', isGlass.toString());
+  }, [isGlass]);
+
   return (
     <Router>
       <div className="min-h-screen flex flex-col text-catppuccin-text selection:bg-catppuccin-accent/30 relative">
         <NodeBackground />
         <div className="flex-grow flex flex-col relative z-10">
-          <Navbar isDark={isDark} toggleTheme={() => setIsDark(!isDark)} />
+          <Navbar 
+            isDark={isDark} 
+            toggleTheme={() => setIsDark(!isDark)} 
+            isGlass={isGlass} 
+            toggleGlass={() => setIsGlass(!isGlass)} 
+          />
           <Routes>
-            <Route path="/" element={<><Hero /><Projects /></>} />
-            <Route path="/langy" element={<LangyPage />} />
+            <Route path="/" element={<><Hero isGlass={isGlass} /><Projects isGlass={isGlass} /></>} />
+            <Route path="/langy" element={<LangyPage isGlass={isGlass} />} />
           </Routes>
-          <Footer />
+          <Footer isGlass={isGlass} />
         </div>
       </div>
     </Router>

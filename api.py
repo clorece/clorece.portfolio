@@ -193,7 +193,13 @@ async def get_stats(user = Depends(get_current_user)):
     }
 
 @app.get("/api/challenge")
-async def get_challenge(language: str, category: str = "Word", word: Optional[str] = None):
+async def get_challenge(language: str, category: str = "Word", word: Optional[str] = None, is_daily: bool = False, user = Depends(get_optional_user)):
+    if is_daily:
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required for daily challenges.")
+        if not database.can_do_daily(user["id"]):
+            raise HTTPException(status_code=403, detail="Daily already completed today.")
+
     english_word, translated_word = await ml_assistant.generate_challenge(language, word, category)
     if english_word == "error":
         raise HTTPException(status_code=400, detail=translated_word)
