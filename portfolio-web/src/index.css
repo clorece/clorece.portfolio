@@ -4,10 +4,11 @@
 
 /* 
   Catppuccin Latte (Light) 
+  Darker background for tiles
 */
 :root {
-  --bg-primary: #eff1f5;     /* Base */
-  --bg-secondary: #e6e9ef;   /* Mantle */
+  --bg-primary: #e6e9ef;     /* Mantle (Slightly darker than Base) */
+  --bg-secondary: #dce0e8;   /* Crust (Even darker) */
   --text-primary: #4c4f69;   /* Text */
   --text-secondary: #6c6f85; /* Subtext0 */
   --accent-primary: #dc8a78; /* Rosewater */
@@ -21,10 +22,11 @@
 
 /* 
   Catppuccin Macchiato (Dark) 
+  Darker background for tiles
 */
 .dark {
-  --bg-primary: #24273a;     /* Base */
-  --bg-secondary: #1e2030;   /* Mantle */
+  --bg-primary: #1e2030;     /* Mantle (Darker than Base) */
+  --bg-secondary: #181926;   /* Crust (Deepest) */
   --text-primary: #cad3f5;   /* Text */
   --text-secondary: #a5adcb; /* Subtext0 */
   --accent-primary: #f4dbd6; /* Rosewater */

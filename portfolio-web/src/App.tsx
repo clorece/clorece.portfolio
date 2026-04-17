@@ -24,7 +24,7 @@ const renderMarkdown = (text: string) => {
 };
 
 const Navbar = ({ isDark, toggleTheme }: { isDark: boolean; toggleTheme: () => void }) => (
-  <nav className="fixed top-0 w-full z-50 bg-catppuccin-bg/90 backdrop-blur-md border-b border-catppuccin-border">
+  <nav className="fixed top-0 w-full z-50 bg-catppuccin-bg/95 backdrop-blur-md border-b border-catppuccin-border">
     <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       <Link to="/" className="text-xl font-bold bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft bg-clip-text text-transparent">
         MyPortfolio
@@ -50,7 +50,7 @@ const Hero = () => (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-catppuccin-bg/80 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-2xl shadow-catppuccin-bg-soft/50"
+      className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-2xl shadow-black/20"
     >
       <motion.h1 
         initial={{ opacity: 0, y: 20 }}
@@ -76,7 +76,7 @@ const Hero = () => (
 )
 
 const ProjectCard = ({ title, description, tags, link }: any) => (
-  <div className="bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-2xl p-6 hover:border-catppuccin-accent/50 transition-all group shadow-sm">
+  <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-6 hover:border-catppuccin-accent/50 transition-all group shadow-sm">
     <h3 className="text-2xl font-bold mb-3 group-hover:text-catppuccin-accent transition-colors">{title}</h3>
     <p className="text-catppuccin-text-soft mb-6">{description}</p>
     <div className="flex flex-wrap gap-2 mb-6">
@@ -92,7 +92,7 @@ const ProjectCard = ({ title, description, tags, link }: any) => (
 
 const Projects = () => (
   <section id="projects" className="py-20 max-w-7xl mx-auto px-4">
-    <div className="bg-catppuccin-bg/60 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem]">
+    <div className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] shadow-xl shadow-black/10">
       <h2 className="text-3xl font-bold mb-12">Featured Projects</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <ProjectCard 
@@ -291,7 +291,7 @@ const LangyPage = () => {
   return (
     <div className="pt-32 max-w-5xl mx-auto px-4 pb-20">
       {token && user && (
-        <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-catppuccin-bg/90 p-6 rounded-2xl border-2 border-catppuccin-border backdrop-blur-sm gap-6 shadow-md">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-12 bg-catppuccin-bg/95 p-6 rounded-2xl border-2 border-catppuccin-border backdrop-blur-sm gap-6 shadow-md">
           <div className="flex items-center gap-4">
             {user?.avatar ? (
               <img 
@@ -340,7 +340,7 @@ const LangyPage = () => {
 
       <div className="grid lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 shadow-sm">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 shadow-sm">
             <h4 className="text-sm font-bold mb-6 flex items-center gap-2 text-catppuccin-text uppercase tracking-widest">
               <AlertCircle size={16} className="text-catppuccin-accent" /> How to Play
             </h4>
@@ -364,7 +364,7 @@ const LangyPage = () => {
           </motion.div>
 
           {!challenge ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/90 backdrop-blur-sm p-8 rounded-3xl border-2 border-catppuccin-border shadow-xl">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-catppuccin-bg/95 backdrop-blur-sm p-8 rounded-3xl border-2 border-catppuccin-border shadow-xl">
               <h4 className="text-xl font-bold mb-8 flex items-center gap-2">
                 <Zap className="text-catppuccin-accent-soft" /> Start a Challenge
               </h4>
@@ -417,7 +417,7 @@ const LangyPage = () => {
               </div>
             </motion.div>
           ) : (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-catppuccin-bg/90 backdrop-blur-md border-2 border-catppuccin-border rounded-3xl p-10 relative overflow-hidden shadow-2xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border rounded-3xl p-10 relative overflow-hidden shadow-2xl">
               <div className="flex justify-between items-center mb-8">
                 <span className="bg-catppuccin-accent/20 text-catppuccin-accent px-4 py-1 rounded-full text-xs font-bold border-2 border-catppuccin-accent/30 uppercase tracking-widest">{isDaily ? 'Daily' : 'Practice'} - {challenge.category}</span>
                 <div className={`text-xl font-mono font-bold ${timer < 10 ? 'text-red-500' : 'text-catppuccin-text-soft'}`}>00:{timer < 10 ? `0${timer}` : timer}</div>
@@ -450,7 +450,7 @@ const LangyPage = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 h-full shadow-md">
+          <div className="bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-6 h-full shadow-md">
             <div className="flex flex-col mb-6">
               <div className="flex items-center justify-between">
                 <h4 className="text-lg font-bold flex items-center gap-2"><Trophy className="text-catppuccin-accent" size={20} /> Leaderboard</h4>
@@ -481,7 +481,7 @@ const LangyPage = () => {
         initial={{ opacity: 0 }} 
         whileInView={{ opacity: 1 }} 
         viewport={{ once: true }} 
-        className="mt-20 bg-catppuccin-bg/80 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] grid md:grid-cols-2 gap-12 text-catppuccin-text-soft shadow-xl"
+        className="mt-20 bg-catppuccin-bg/95 backdrop-blur-md border-2 border-catppuccin-border p-12 rounded-[2.5rem] grid md:grid-cols-2 gap-12 text-catppuccin-text-soft shadow-xl shadow-black/10"
       >
         <div>
           <h4 className="text-2xl font-bold mb-4 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent">About Project</h4>
@@ -508,7 +508,7 @@ const LangyPage = () => {
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="mt-12 bg-catppuccin-bg/90 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-8 relative overflow-hidden shadow-lg"
+        className="mt-12 bg-catppuccin-bg/95 backdrop-blur-sm border-2 border-catppuccin-border rounded-3xl p-8 relative overflow-hidden shadow-lg shadow-black/10"
       >
         <div className="absolute top-0 right-0 p-8 opacity-5">
           <ShieldCheck size={120} />
