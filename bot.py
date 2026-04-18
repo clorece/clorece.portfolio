@@ -146,7 +146,7 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
         category = view.choice
     
         # Generate Challenge
-        english_word, translated_word = await ml_assistant.generate_challenge(language, word, category)
+        english_word, translated_word, example_sentence_en, example_sentence_native = await ml_assistant.generate_challenge(language, word, category)
         
         if english_word == "error":
             err = translated_word[:150] + "..." if len(translated_word) > 150 else translated_word
@@ -158,10 +158,19 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
         else:
             challenge_prompt = ml_assistant.formatPrompt_NativeToEng(language, translated_word)
 
+        # Add example sentence for Word mode to help disambiguate meanings
+        # Standard mode: show target-language sentence (doesn't reveal the English answer)
+        # Inverse mode: show English sentence (doesn't reveal the target-language answer)
+        example_line = ""
+        if category.lower() == "word":
+            example = example_sentence_en if is_inverse else example_sentence_native
+            if example:
+                example_line = f"\n\n💡 **Example:** *{example}*"
+
         ch_type_str = "Daily" if is_daily else "Practice"
         challenge_embed = discord.Embed(
             title=f"{ch_type_str} {category} ({language.capitalize()})",
-            description=f"{challenge_prompt}\n\n*(Type your answer in this channel. You have 60 seconds!)*",
+            description=f"{challenge_prompt}{example_line}\n\n*(Type your answer in this channel. You have 60 seconds!)*",
             color=discord.Color.purple()
         )
         await interaction.followup.send(content=interaction.user.mention, embed=challenge_embed)

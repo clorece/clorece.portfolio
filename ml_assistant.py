@@ -62,10 +62,48 @@ SUPPORTED_LANGUAGES = {
 def is_language_supported(lang: str) -> bool:
     return lang.lower() in SUPPORTED_LANGUAGES
 
-async def generate_challenge(language: str, word: str = None, category: str = "Word") -> tuple[str, str]:
+async def generate_example_sentence(english_word: str, language: str) -> tuple[str, str]:
+    """Generates a meaningful contextual example sentence using WordNet's curated examples.
+    WordNet synsets include hand-written example sentences that show the word 
+    in its correct semantic context, which is exactly what we need for disambiguation.
+    Returns (english_sentence, translated_sentence)."""
+    from nltk.corpus import wordnet
+    
+    english_sentence = ""
+    
+    try:
+        synsets = wordnet.synsets(english_word.replace(' ', '_'))
+        
+        if synsets:
+            # 1. Try to find a synset with a real example sentence
+            for syn in synsets:
+                examples = syn.examples()
+                if examples:
+                    # Pick the first example — these are curated and contextually rich
+                    english_sentence = examples[0]
+                    break
+            
+            # 2. Fallback: construct from definition if no examples exist
+            if not english_sentence:
+                definition = synsets[0].definition()
+                if definition:
+                    english_sentence = f"{english_word.capitalize()}: {definition}."
+        
+        if not english_sentence:
+            return "", ""
+        
+        # Translate the meaningful example to the target language
+        loop = asyncio.get_event_loop()
+        translator = GoogleTranslator(source='english', target=language.lower())
+        translated_sentence = await loop.run_in_executor(None, translator.translate, english_sentence)
+        return english_sentence, translated_sentence
+    except Exception:
+        return "", ""
+
+async def generate_challenge(language: str, word: str = None, category: str = "Word") -> tuple[str, str, str, str]:
     if not is_language_supported(language):
         langs_str = ", ".join(sorted([l.capitalize() for l in SUPPORTED_LANGUAGES]))
-        return "error", f"'{language}' is not currently available. Please choose from: {langs_str}."
+        return "error", f"'{language}' is not currently available. Please choose from: {langs_str}.", "", ""
     
     english_word = word if word else get_random_english_word(category)
     
@@ -74,9 +112,19 @@ async def generate_challenge(language: str, word: str = None, category: str = "W
         loop = asyncio.get_event_loop()
         translator = GoogleTranslator(source='english', target=language.lower())
         translated = await loop.run_in_executor(None, translator.translate, english_word)
-        return english_word.lower(), translated
+        
+        # Generate example sentences for Word mode to help disambiguate multiple meanings
+        # Returns both English and translated versions so the client can pick based on mode:
+        #   Standard (Native→English): show target-language sentence (doesn't reveal the English answer)
+        #   Inverse (English→Native): show English sentence (doesn't reveal the target-language answer)
+        example_sentence_en = ""
+        example_sentence_native = ""
+        if category.lower() == "word":
+            example_sentence_en, example_sentence_native = await generate_example_sentence(english_word, language)
+        
+        return english_word.lower(), translated, example_sentence_en, example_sentence_native
     except Exception as e:
-        return "error", str(e)
+        return "error", str(e), "", ""
 
 async def translate_text(text: str, source: str = 'auto', target: str = 'english', retries: int = 3) -> str:
     for attempt in range(retries):

@@ -311,11 +311,9 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          language: challenge.language,
-          original_english: challenge.english_word,
+          challenge_id: challenge.challenge_id,
           user_input: answer,
           is_daily: isDaily,
-          category: challenge.category,
           is_inverse: isInverse
         })
       })
@@ -478,8 +476,18 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
                 <div className={`text-lg md:text-xl font-mono font-bold ${timer < 10 ? 'text-red-500' : 'text-catppuccin-text-soft'}`}>00:{timer < 10 ? `0${timer}` : timer}</div>
               </div>
               <h2 className="text-center text-catppuccin-text-soft mb-4 tracking-widest uppercase text-[10px] font-bold">{isInverse ? `Translate to ${challenge.language}` : 'Translate to English'}</h2>
-              <h1 className="text-center text-3xl md:text-5xl font-extrabold mb-8 md:mb-12 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent break-words">{isInverse ? challenge.english_word : challenge.translated_word}</h1>
-              {isInverse && challenge.meaning_hint && <p className="text-center text-catppuccin-text-soft italic mb-8 md:mb-12 -mt-6 md:-mt-8 text-sm">{challenge.meaning_hint}</p>}
+              <h1 className="text-center text-3xl md:text-5xl font-extrabold mb-4 md:mb-6 bg-gradient-to-r from-catppuccin-text to-catppuccin-text-soft bg-clip-text text-transparent break-words">{isInverse ? challenge.english_word : challenge.translated_word}</h1>
+              {challenge.category === 'Word' && (() => {
+                const example = isInverse ? challenge.example_sentence_en : challenge.example_sentence_native;
+                return example ? (
+                  <div className="flex justify-center mb-8 md:mb-12 -mt-2 md:-mt-3">
+                    <p className="text-catppuccin-text-soft italic text-sm bg-catppuccin-bg-soft/50 py-2 px-4 rounded-xl border border-catppuccin-border/50 max-w-md">
+                      💡 <span className="opacity-80">{example}</span>
+                    </p>
+                  </div>
+                ) : null;
+              })()}
+              {isInverse && challenge.meaning_hint && <p className="text-center text-catppuccin-text-soft italic mb-8 md:mb-12 -mt-2 md:-mt-3 text-sm">{challenge.meaning_hint}</p>}
               <AnimatePresence>
                 {!result ? (
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -491,12 +499,19 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
                     <div className={`inline-flex items-center gap-2 px-4 md:px-6 py-2 rounded-full mb-6 font-bold border-2 text-sm ${result.is_correct ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'}`}>{result.is_correct ? <CheckCircle2 size={18} /> : <XCircle size={18} />}{result.is_correct ? 'Correct!' : 'Incorrect'}</div>
                     <div className="mb-6 md:mb-8"><p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest mb-1 font-bold">Accuracy Score</p><p className={`text-3xl md:text-4xl font-black ${result.is_correct ? 'text-emerald-400' : 'text-red-400'}`}>{(result.score * 100).toFixed(0)}%</p></div>
                     <div className="space-y-2 mb-6 md:mb-8 bg-catppuccin-bg p-4 md:p-6 rounded-2xl border-2 border-catppuccin-border">
-                      <p className="text-lg md:text-xl font-bold text-catppuccin-text">Expected: <span className="text-catppuccin-accent-soft">{isInverse ? challenge.translated_word : result.expected}</span></p>
+                      <p className="text-lg md:text-xl font-bold text-catppuccin-text">Expected: <span className="text-catppuccin-accent-soft">{isInverse ? result.translated_word : result.expected}</span></p>
                       <p className="text-xs md:text-sm font-bold text-catppuccin-text-soft uppercase tracking-wide">You said: <span className={result.is_correct ? "text-emerald-500/70" : "text-red-400/70"}>{answer}</span></p>
                       <div className="text-catppuccin-text-soft italic text-xs md:text-sm leading-relaxed whitespace-pre-line mt-2">"{renderMarkdown(result.reason)}"</div>
                     </div>
                     {result.earned && <div className="bg-catppuccin-accent-soft/10 border-2 border-catppuccin-accent-soft/20 p-3 md:p-4 rounded-2xl mb-6 md:mb-8"><p className="text-catppuccin-accent-soft font-bold text-lg md:text-xl">+ {result.earned} Points!</p></div>}
-                    <button onClick={() => setChallenge(null)} className="bg-catppuccin-bg border-2 border-catppuccin-border hover:bg-catppuccin-bg-soft px-8 md:px-12 py-2.5 md:py-3 rounded-xl font-bold transition-all shadow-md text-sm md:text-base">Finish</button>
+                    <div className="flex gap-3 justify-center">
+                      <button onClick={() => setChallenge(null)} className="bg-catppuccin-bg border-2 border-catppuccin-border hover:bg-catppuccin-bg-soft px-8 md:px-12 py-2.5 md:py-3 rounded-xl font-bold transition-all shadow-md text-sm md:text-base">Finish</button>
+                      {!isDaily && (
+                        <button onClick={() => startChallenge('practice')} disabled={loading} className="bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft hover:brightness-110 px-8 md:px-12 py-2.5 md:py-3 rounded-xl font-bold transition-all shadow-lg text-catppuccin-bg text-sm md:text-base disabled:opacity-50 flex items-center gap-2">
+                          {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Next Challenge
+                        </button>
+                      )}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

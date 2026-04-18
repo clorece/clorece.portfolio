@@ -1,13 +1,20 @@
 import os
 import asyncio
+import secrets
+import time
 from typing import Optional
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from jose import jwt
+from pydantic import BaseModel, Field
+from jose import jwt, JWTError
 from datetime import datetime, timedelta
 import httpx
 from dotenv import load_dotenv
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from starlette.responses import JSONResponse
 
 import ml_assistant
 import database
@@ -17,24 +24,78 @@ load_dotenv()
 
 app = FastAPI()
 
+# --- Rate Limiting ---
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(status_code=429, content={"detail": "Too many requests. Please slow down."})
+
 # Global HTTP client with a generous timeout for cloud environments (HF/Supabase)
 httpx_client = httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=10.0))
 
-# Configure CORS for your GitHub Pages URL later
+# --- CORS ---
+# Restrict to known frontend origins. CORS_ORIGINS env var accepts comma-separated URLs.
+_cors_env = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Update this with your GitHub Pages URL
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configuration from .env
+# --- Configuration ---
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://localhost:10000/api/auth/callback")
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this")
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("FATAL: SECRET_KEY environment variable is not set! Refusing to start with an insecure default.")
 ALGORITHM = "HS256"
+
+# --- Server-Side Challenge Store ---
+# Prevents grade tampering by storing challenge data server-side.
+# The client receives a challenge_id and cannot forge the expected answer.
+_challenge_store: dict = {}
+_CHALLENGE_TTL = 300  # 5 minutes
+
+def _cleanup_expired_challenges():
+    """Removes expired challenges to prevent memory leaks."""
+    now = time.time()
+    expired = [k for k, v in _challenge_store.items() if now - v["created_at"] > _CHALLENGE_TTL]
+    for k in expired:
+        del _challenge_store[k]
+
+def store_challenge(data: dict) -> str:
+    """Stores challenge data and returns a secure, unguessable challenge_id."""
+    _cleanup_expired_challenges()
+    challenge_id = secrets.token_urlsafe(32)
+    _challenge_store[challenge_id] = {
+        **data,
+        "created_at": time.time()
+    }
+    return challenge_id
+
+def consume_challenge(challenge_id: str) -> Optional[dict]:
+    """Gets and removes a challenge (one-time use to prevent replay attacks)."""
+    data = _challenge_store.pop(challenge_id, None)
+    if not data:
+        return None
+    if time.time() - data["created_at"] > _CHALLENGE_TTL:
+        return None  # Expired
+    return data
+
+# --- Pydantic Models for Input Validation ---
+class GradeRequest(BaseModel):
+    challenge_id: str = Field(..., max_length=100)
+    user_input: str = Field(..., min_length=1, max_length=1000)
+    is_daily: bool = False
+    is_inverse: bool = False
 
 # Helper for JWT
 def create_access_token(data: dict):
@@ -51,7 +112,7 @@ async def get_current_user(request: Request):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except:
+    except (JWTError, KeyError, ValueError) as e:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 async def get_optional_user(request: Request):
@@ -62,7 +123,7 @@ async def get_optional_user(request: Request):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except:
+    except (JWTError, KeyError, ValueError):
         return None
 
 async def background_initialization():
@@ -195,33 +256,51 @@ async def get_stats(user = Depends(get_current_user)):
     }
 
 @app.get("/api/challenge")
-async def get_challenge(language: str, category: str = "Word", word: Optional[str] = None, is_daily: bool = False, user = Depends(get_optional_user)):
+@limiter.limit("15/minute")
+async def get_challenge(request: Request, language: str, category: str = "Word", word: Optional[str] = None, is_daily: bool = False, user = Depends(get_optional_user)):
     if is_daily:
         if not user:
             raise HTTPException(status_code=401, detail="Authentication required for daily challenges.")
         if not database.can_do_daily(user["id"]):
             raise HTTPException(status_code=403, detail="Daily already completed today.")
 
-    english_word, translated_word = await ml_assistant.generate_challenge(language, word, category)
+    english_word, translated_word, example_sentence_en, example_sentence_native = await ml_assistant.generate_challenge(language, word, category)
     if english_word == "error":
         raise HTTPException(status_code=400, detail=translated_word)
     
+    # Store challenge server-side so the client cannot tamper with the expected answer
+    challenge_id = store_challenge({
+        "english_word": english_word,
+        "translated_word": translated_word,
+        "language": language,
+        "category": category
+    })
+    
     return {
+        "challenge_id": challenge_id,
         "english_word": english_word,
         "translated_word": translated_word,
         "meaning_hint": ml_assistant.get_meaning_hint(english_word),
+        "example_sentence_en": example_sentence_en,
+        "example_sentence_native": example_sentence_native,
         "language": language,
         "category": category
     }
 
 @app.post("/api/grade")
-async def grade_challenge(data: dict, user = Depends(get_optional_user)):
-    language = data.get("language")
-    original_english = data.get("original_english")
-    user_input = data.get("user_input")
-    is_daily = data.get("is_daily", False)
-    category = data.get("category", "Word")
-    is_inverse = data.get("is_inverse", False)
+@limiter.limit("15/minute")
+async def grade_challenge(request: Request, data: GradeRequest, user = Depends(get_optional_user)):
+    # Look up stored challenge — prevents the client from forging the expected answer
+    challenge_data = consume_challenge(data.challenge_id)
+    if not challenge_data:
+        raise HTTPException(status_code=400, detail="Invalid or expired challenge. Please start a new one.")
+    
+    language = challenge_data["language"]
+    original_english = challenge_data["english_word"]
+    translated_word = challenge_data["translated_word"]
+    category = challenge_data["category"]
+    user_input = data.user_input
+    is_daily = data.is_daily
 
     is_correct, score, reason = await ml_assistant.process_user_input_and_grade(language, original_english, user_input, category)
     
@@ -229,7 +308,8 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
         "is_correct": is_correct,
         "score": score,
         "reason": reason,
-        "expected": original_english
+        "expected": original_english,
+        "translated_word": translated_word
     }
 
     # Only process database updates if user is authenticated
@@ -265,11 +345,13 @@ async def grade_challenge(data: dict, user = Depends(get_optional_user)):
 
 @app.get("/api/leaderboard")
 async def get_leaderboard(limit: int = 10):
+    limit = min(max(limit, 1), 50)  # Cap between 1 and 50
     # Returns the pre-fetched leaderboard cache for instant loading
     return database.get_leaderboard_cached()
 
 @app.post("/api/leaderboard/refresh")
-async def refresh_leaderboard(user = Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def refresh_leaderboard(request: Request, user = Depends(get_current_user)):
     # Forces a database re-query and updates the global cache (Auth required)
     database.refresh_leaderboard_cache()
     return database.get_leaderboard_cached()

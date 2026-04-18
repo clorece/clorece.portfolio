@@ -18,6 +18,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
+# Create non-root user for security (prevents root access if app is compromised)
+RUN useradd -m appuser
+USER appuser
+
 # Expose port 7860 (Hugging Face default)
 EXPOSE 7860
 
