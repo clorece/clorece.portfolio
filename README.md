@@ -40,11 +40,11 @@ Most language bots fail if you have a single typo or use a synonym. Langy solves
 3.  **Linguistic Hierarchy (40%):** Leverages **WordNet** and specialized language tools to identify synonyms and categorical relationships.
 
 ### Expert Language Support
-Langy currently supports **20 top-studied languages**, each with dedicated expert tool verification:
+Langy currently supports **21 top-studied languages**, each with dedicated expert tool verification:
 
 | Category | Languages | Expert Sources |
 | :--- | :--- | :--- |
-| **Asian** | Japanese, Chinese, Korean, Hindi, Vietnamese, Indonesian | Jisho, CEDICT, Wiki |
+| **Asian** | Japanese, Chinese, Korean, Hindi, Vietnamese, Indonesian, Tagalog | Jisho, CEDICT, Free Dict, Wiki |
 | **European** | Spanish, French, German, Italian, Portuguese, Dutch, Polish, Swedish, Greek, Czech, Russian | RAE, Larousse, Wiki |
 | **Middle Eastern** | Arabic, Turkish, Hebrew | Wiki / Almaany |
 

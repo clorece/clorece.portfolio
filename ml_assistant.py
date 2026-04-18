@@ -56,7 +56,7 @@ SUPPORTED_LANGUAGES = {
     "spanish", "french", "german", "japanese", "italian", 
     "korean", "chinese", "portuguese", "russian", "arabic", 
     "dutch", "greek", "hindi", "turkish", "vietnamese", "polish",
-    "swedish", "indonesian", "hebrew", "czech"
+    "swedish", "indonesian", "hebrew", "czech", "tagalog"
 }
 
 def is_language_supported(lang: str) -> bool:

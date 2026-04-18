@@ -67,3 +67,22 @@ body {
   background-color: var(--accent-secondary);
   opacity: 0.5;
 }
+
+/* WIP Badge Pulse */
+@keyframes wip-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(var(--accent-secondary-rgb), 0.4); }
+  50% { opacity: 0.85; box-shadow: 0 0 12px 4px rgba(var(--accent-secondary-rgb), 0.15); }
+}
+
+.wip-badge {
+  animation: wip-pulse 2.5s ease-in-out infinite;
+}
+
+/* Skill tag hover lift */
+.skill-tag {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.skill-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb), 0.15);
+}

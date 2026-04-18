@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { HashRouter as Router, Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw, Bot, ExternalLink, Sun, Moon } from 'lucide-react'
+import { Languages, Trophy, Zap, Globe, Github, LogIn, LogOut, Send, Loader2, CheckCircle2, XCircle, AlertCircle, Search, ShieldCheck, Lock, EyeOff, RefreshCw, Bot, ExternalLink, Sun, Moon, Linkedin, Mail, GraduationCap, Code2, Gamepad2, Brain, Construction } from 'lucide-react'
 import NodeBackground from './NodeBackground'
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api"
@@ -22,16 +22,31 @@ const renderMarkdown = (text: string) => {
   });
 };
 
+const WipBadge = ({ size = 'md' }: { size?: 'sm' | 'md' }) => (
+  <span className={`wip-badge inline-flex items-center gap-1.5 bg-catppuccin-accent-soft/15 text-catppuccin-accent-soft border border-catppuccin-accent-soft/30 rounded-full font-bold uppercase tracking-widest ${
+    size === 'sm' ? 'text-[8px] px-2 py-0.5' : 'text-[10px] px-3 py-1'
+  }`}>
+    <Construction size={size === 'sm' ? 10 : 12} />
+    WIP
+  </span>
+);
+
 const Navbar = ({ isDark, toggleTheme, isGlass, toggleGlass }: { isDark: boolean; toggleTheme: () => void; isGlass: boolean; toggleGlass: () => void }) => (
   <nav className={`fixed top-0 w-full z-50 ${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-b border-catppuccin-border transition-all`}>
     <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
       <Link to="/" className="text-lg md:text-xl font-bold bg-gradient-to-r from-catppuccin-accent to-catppuccin-accent-soft bg-clip-text text-transparent">
-        MyPortfolio
+        Clarence Grimaldo
       </Link>
-      <div className="flex items-center gap-2 md:gap-8">
-        <Link to="/" className="hover:text-catppuccin-accent transition-colors text-xs md:text-sm font-medium hidden sm:block">Projects</Link>
+      <div className="flex items-center gap-2 md:gap-6">
+        <Link to="/" className="hover:text-catppuccin-accent transition-colors text-xs md:text-sm font-medium hidden sm:block">Home</Link>
         <Link to="/langy" className="hover:text-catppuccin-accent-soft transition-colors flex items-center gap-1 text-xs md:text-sm font-medium">
           <Languages size={14} className="md:w-4 md:h-4" /> Langy
+        </Link>
+        <Link to="/rin" className="hover:text-catppuccin-accent-soft transition-colors flex items-center gap-1 text-xs md:text-sm font-medium hidden sm:flex">
+          <Brain size={14} className="md:w-4 md:h-4" /> Rin <WipBadge size="sm" />
+        </Link>
+        <Link to="/until-journeys-end" className="hover:text-catppuccin-accent-soft transition-colors flex items-center gap-1 text-xs md:text-sm font-medium hidden md:flex">
+          <Gamepad2 size={14} className="md:w-4 md:h-4" /> UJE <WipBadge size="sm" />
         </Link>
         <div className="flex items-center gap-1.5 md:gap-2">
           <button 
@@ -55,70 +70,363 @@ const Navbar = ({ isDark, toggleTheme, isGlass, toggleGlass }: { isDark: boolean
 )
 
 const Hero = ({ isGlass }: { isGlass: boolean }) => (
-  <section className="pt-24 md:pt-32 pb-10 md:pb-20 px-4 text-center max-w-4xl mx-auto">
+  <section className="pt-24 md:pt-32 pb-10 md:pb-16 px-4 text-center max-w-4xl mx-auto">
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-2xl shadow-black/20 transition-all`}
     >
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="text-catppuccin-accent-soft text-xs md:text-sm font-bold uppercase tracking-[0.3em] mb-4"
+      >
+        CS Student · AI · Game Dev
+      </motion.p>
       <motion.h1 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
         className="text-4xl md:text-7xl font-extrabold mb-6"
       >
-        Building Digital <br />
-        <span className="text-catppuccin-accent">Experiences</span>
+        Clarence <br />
+        <span className="text-catppuccin-accent">Grimaldo</span>
       </motion.h1>
-      <p className="text-catppuccin-text-soft text-base md:text-lg max-w-2xl mx-auto mb-10">
-        I'm a developer passionate about creating interactive applications, from Discord bots to modern web platforms.
-      </p>
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Link to="/langy" className="bg-catppuccin-accent-soft hover:brightness-110 text-catppuccin-bg px-6 md:px-8 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-catppuccin-accent-soft/20">
-          Try Langy Bot <Zap size={18} />
-        </Link>
-        <a href="https://github.com" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 md:px-8 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2">
+      <motion.p 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="text-catppuccin-text-soft text-base md:text-lg max-w-2xl mx-auto mb-10"
+      >
+        Computer Science student at UNC Charlotte with a concentration in Artificial Intelligence, Robotics, and Gaming. I build interactive systems — from privacy-first AI companions to action RPGs and language-learning platforms.
+      </motion.p>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="flex flex-col sm:flex-row justify-center gap-4"
+      >
+        <a href="#projects" className="bg-catppuccin-accent-soft hover:brightness-110 text-catppuccin-bg px-6 md:px-8 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-catppuccin-accent-soft/20">
+          View Projects <Code2 size={18} />
+        </a>
+        <a href="https://github.com/clorece" target="_blank" rel="noopener noreferrer" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 md:px-8 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2">
           GitHub <Github size={18} />
         </a>
-      </div>
+        <a href="https://www.linkedin.com/in/clarence-grimaldo" target="_blank" rel="noopener noreferrer" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 md:px-8 py-3 rounded-full font-semibold transition-all flex items-center justify-center gap-2">
+          LinkedIn <Linkedin size={18} />
+        </a>
+      </motion.div>
     </motion.div>
   </section>
 )
 
-const ProjectCard = ({ title, description, tags, link }: any) => (
-  <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-6 hover:border-catppuccin-accent/50 transition-all group shadow-sm">
-    <h3 className="text-2xl font-bold mb-3 group-hover:text-catppuccin-accent transition-colors">{title}</h3>
-    <p className="text-catppuccin-text-soft mb-6">{description}</p>
+const SkillsEducation = ({ isGlass }: { isGlass: boolean }) => {
+  const languages = ['C / C++ / C#', 'HTML', 'Java', 'JavaScript', 'Python', 'GLSL']
+  const technologies = ['PyTorch', 'PySpark', 'Hadoop', 'AWS', 'Ollama', 'Gemma', 'Linux', 'Git', 'GitLFS', 'Unity']
+
+  return (
+    <section className="pb-10 md:pb-16 max-w-7xl mx-auto px-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-xl shadow-black/10 transition-all`}
+      >
+        <div className="grid md:grid-cols-2 gap-10 md:gap-16">
+          {/* Education */}
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 bg-catppuccin-accent/10 rounded-xl flex items-center justify-center border border-catppuccin-accent/20">
+                <GraduationCap size={20} className="text-catppuccin-accent" />
+              </div>
+              Education
+            </h2>
+            <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-5 md:p-6">
+              <h3 className="text-base md:text-lg font-bold text-catppuccin-text mb-1">University of North Carolina at Charlotte</h3>
+              <p className="text-catppuccin-accent-soft text-sm font-bold mb-2">Bachelor in Computer Science</p>
+              <p className="text-catppuccin-text-soft text-xs font-medium mb-3">Expected May 2026</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold bg-catppuccin-accent/10 text-catppuccin-accent px-3 py-1 rounded-full border border-catppuccin-accent/20">
+                  AI & Robotics
+                </span>
+                <span className="text-[10px] font-bold bg-catppuccin-accent-soft/10 text-catppuccin-accent-soft px-3 py-1 rounded-full border border-catppuccin-accent-soft/20">
+                  Gaming
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Skills */}
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold mb-6 flex items-center gap-3">
+              <div className="w-10 h-10 bg-catppuccin-accent-soft/10 rounded-xl flex items-center justify-center border border-catppuccin-accent-soft/20">
+                <Code2 size={20} className="text-catppuccin-accent-soft" />
+              </div>
+              Skills
+            </h2>
+            <div className="space-y-5">
+              <div>
+                <p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest font-bold mb-3">Languages</p>
+                <div className="flex flex-wrap gap-2">
+                  {languages.map(skill => (
+                    <span key={skill} className="skill-tag text-xs font-medium bg-catppuccin-bg-soft px-3 py-1.5 rounded-full text-catppuccin-text border border-catppuccin-border cursor-default">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest font-bold mb-3">Technologies & Libraries</p>
+                <div className="flex flex-wrap gap-2">
+                  {technologies.map(skill => (
+                    <span key={skill} className="skill-tag text-xs font-medium bg-catppuccin-bg-soft px-3 py-1.5 rounded-full text-catppuccin-text border border-catppuccin-border cursor-default">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  )
+}
+
+const ProjectCard = ({ title, description, tags, link, isWip, icon }: { title: string; description: string; tags: string[]; link: string; isWip?: boolean; icon?: React.ReactNode }) => (
+  <motion.div 
+    whileHover={{ y: -4 }}
+    className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-6 hover:border-catppuccin-accent/50 transition-all group shadow-sm"
+  >
+    <div className="flex items-start justify-between mb-3">
+      <div className="flex items-center gap-3">
+        {icon && <div className="w-9 h-9 bg-catppuccin-accent/10 rounded-lg flex items-center justify-center border border-catppuccin-accent/20 text-catppuccin-accent">{icon}</div>}
+        <h3 className="text-xl md:text-2xl font-bold group-hover:text-catppuccin-accent transition-colors">{title}</h3>
+      </div>
+      {isWip && <WipBadge />}
+    </div>
+    <p className="text-catppuccin-text-soft mb-6 text-sm leading-relaxed">{description}</p>
     <div className="flex flex-wrap gap-2 mb-6">
-      {tags.map((tag: string) => (
-        <span key={tag} className="text-xs font-medium bg-catppuccin-bg px-3 py-1 rounded-full text-catppuccin-text border border-catppuccin-border">
+      {tags.map((tag: string, i: number) => (
+        <span key={tag} className={`text-xs font-bold px-3 py-1 rounded-full border ${i % 2 === 0 ? 'text-catppuccin-accent border-catppuccin-accent bg-catppuccin-accent/10' : 'text-catppuccin-accent-soft border-catppuccin-accent-soft bg-catppuccin-accent-soft/10'}`}>
           {tag}
         </span>
       ))}
     </div>
-    <Link to={link} className="text-catppuccin-accent font-semibold hover:underline">View Project &rarr; </Link>
-  </div>
+    <Link to={link} className="text-catppuccin-accent font-semibold hover:underline flex items-center gap-1.5 text-sm">
+      {isWip ? 'View Details' : 'View Project'} &rarr;
+    </Link>
+  </motion.div>
 )
 
 const Projects = ({ isGlass }: { isGlass: boolean }) => (
-  <section id="projects" className="py-20 max-w-7xl mx-auto px-4">
+  <section id="projects" className="py-10 md:py-16 max-w-7xl mx-auto px-4">
     <div className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-xl shadow-black/10 transition-all`}>
       <h2 className="text-3xl font-bold mb-12">Featured Projects</h2>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         <ProjectCard 
-          title="Langy Discord Bot"
-          description="A language learning bot that uses semantic ML to grade translations and track streaks."
-          tags={['Python', 'Discord.py', 'NLP', 'FastAPI']}
-          link="/langy"
+          title="Rin"
+          description="A privacy-first local AI desktop companion powered by Ollama. Features a Memory & Perception pipeline and Smart Idle system for intelligent resource management."
+          tags={['Ollama', 'Python', 'JavaScript']}
+          link="/rin"
+          isWip={true}
+          icon={<Brain size={18} />}
         />
         <ProjectCard 
-          title="Personal Portfolio"
-          description="This website! Built with React, Vite, and Tailwind CSS."
-          tags={['React', 'TypeScript', 'Tailwind']}
-          link="/"
+          title="Until Journey's End"
+          description="A Unity action RPG with custom animation controllers, combat systems with status effects, and enemy AI using Dijkstra's pathfinding and formational movement."
+          tags={['C#', 'Unity', 'URP']}
+          link="/until-journeys-end"
+          isWip={true}
+          icon={<Gamepad2 size={18} />}
+        />
+        <ProjectCard 
+          title="Langy Discord Bot"
+          description="A language learning bot that uses semantic ML to grade translations and track streaks. Supports 21+ languages with daily challenges and leaderboards."
+          tags={['Python', 'Discord.py', 'NLP', 'FastAPI']}
+          link="/langy"
+          icon={<Languages size={18} />}
         />
       </div>
     </div>
   </section>
+)
+
+// --- Project Detail Pages ---
+
+const RinPage = ({ isGlass }: { isGlass: boolean }) => (
+  <div className="pt-20 md:pt-32 max-w-4xl mx-auto px-4 pb-20">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }}
+      className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-2xl shadow-black/20 transition-all`}
+    >
+      {/* WIP Banner */}
+      <div className="wip-badge flex items-center gap-3 bg-catppuccin-accent-soft/10 border-2 border-catppuccin-accent-soft/25 rounded-2xl p-4 mb-8">
+        <Construction size={20} className="text-catppuccin-accent-soft shrink-0" />
+        <div>
+          <p className="text-sm font-bold text-catppuccin-accent-soft">Work in Progress</p>
+          <p className="text-xs text-catppuccin-text-soft">This project is actively being developed. A live preview will be available soon.</p>
+        </div>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-14 h-14 bg-catppuccin-accent/10 rounded-2xl flex items-center justify-center border-2 border-catppuccin-accent/20">
+          <Brain size={28} className="text-catppuccin-accent" />
+        </div>
+        <div>
+          <h1 className="text-3xl md:text-5xl font-extrabold">Rin</h1>
+          <p className="text-catppuccin-text-soft text-sm font-medium">Local AI Desktop Companion</p>
+        </div>
+      </div>
+
+      <p className="text-catppuccin-accent-soft text-xs font-bold uppercase tracking-widest mb-8">January 2026 — Present</p>
+
+      {/* Description */}
+      <div className="space-y-6 mb-10">
+        <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-5 md:p-6">
+          <h3 className="font-bold text-sm mb-3 text-catppuccin-accent flex items-center gap-2">
+            <ShieldCheck size={16} /> Privacy-First Architecture
+          </h3>
+          <p className="text-catppuccin-text-soft text-sm leading-relaxed">
+            Migrated to Ollama from API keys like Gemini for a privacy-first AI companion, cutting latency by 40% and eliminating usage costs. All processing runs locally on the user's machine.
+          </p>
+        </div>
+        <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-5 md:p-6">
+          <h3 className="font-bold text-sm mb-3 text-catppuccin-accent flex items-center gap-2">
+            <Brain size={16} /> Memory & Perception Pipeline
+          </h3>
+          <p className="text-catppuccin-text-soft text-sm leading-relaxed">
+            Designed a pipeline that allows the LLM to write and store learned behaviors, actions and tastes of the user. Connects with a Smart Idle system that applies a significance score to each data point based on action frequency, prioritizing what the AI companion must remember and what it is allowed to forget.
+          </p>
+        </div>
+        <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-5 md:p-6">
+          <h3 className="font-bold text-sm mb-3 text-catppuccin-accent flex items-center gap-2">
+            <Zap size={16} /> Smart Idle System
+          </h3>
+          <p className="text-catppuccin-text-soft text-sm leading-relaxed">
+            Backend features include a Smart Idle system that dynamically throttles background vision processing during inactivity, cutting CPU/GPU idle consumption by over 60% without sacrificing system responsiveness.
+          </p>
+        </div>
+      </div>
+
+      {/* Tech Stack */}
+      <div className="mb-10">
+        <p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest font-bold mb-3">Tech Stack</p>
+        <div className="flex flex-wrap gap-2">
+          {['Ollama', 'Python', 'JavaScript'].map((tag, i) => (
+            <span key={tag} className={`skill-tag text-xs font-bold px-3 py-1.5 rounded-full border ${i % 2 === 0 ? 'text-catppuccin-accent border-catppuccin-accent bg-catppuccin-accent/10' : 'text-catppuccin-accent-soft border-catppuccin-accent-soft bg-catppuccin-accent-soft/10'}`}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Links */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <a 
+          href="https://github.com/clorece/Rin" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="bg-catppuccin-bg border-2 border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm"
+        >
+          <Github size={18} /> View on GitHub
+        </a>
+        <Link to="/" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all text-sm text-catppuccin-text-soft">
+          &larr; Back to Projects
+        </Link>
+      </div>
+    </motion.div>
+  </div>
+)
+
+const UJEPage = ({ isGlass }: { isGlass: boolean }) => (
+  <div className="pt-20 md:pt-32 max-w-4xl mx-auto px-4 pb-20">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }}
+      className={`${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-md' : 'bg-catppuccin-bg'} border-2 border-catppuccin-border p-6 md:p-12 rounded-3xl md:rounded-[2.5rem] shadow-2xl shadow-black/20 transition-all`}
+    >
+      {/* WIP Banner */}
+      <div className="wip-badge flex items-center gap-3 bg-catppuccin-accent-soft/10 border-2 border-catppuccin-accent-soft/25 rounded-2xl p-4 mb-8">
+        <Construction size={20} className="text-catppuccin-accent-soft shrink-0" />
+        <div>
+          <p className="text-sm font-bold text-catppuccin-accent-soft">Work in Progress</p>
+          <p className="text-xs text-catppuccin-text-soft">This project is actively being developed. A live preview will be available soon.</p>
+        </div>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-14 h-14 bg-catppuccin-accent/10 rounded-2xl flex items-center justify-center border-2 border-catppuccin-accent/20">
+          <Gamepad2 size={28} className="text-catppuccin-accent" />
+        </div>
+        <div>
+          <h1 className="text-3xl md:text-5xl font-extrabold">Until Journey's End</h1>
+          <p className="text-catppuccin-text-soft text-sm font-medium">Unity Action RPG</p>
+        </div>
+      </div>
+
+      <p className="text-catppuccin-accent-soft text-xs font-bold uppercase tracking-widest mb-8">December 2025 — Present</p>
+
+      {/* Description */}
+      <div className="space-y-6 mb-10">
+        <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-5 md:p-6">
+          <h3 className="font-bold text-sm mb-3 text-catppuccin-accent flex items-center gap-2">
+            <Code2 size={16} /> Custom Animation System
+          </h3>
+          <p className="text-catppuccin-text-soft text-sm leading-relaxed">
+            Implemented a custom frame-based Animation Controller that uses Unity's Sprite Sheet framing tool with dynamic state transitions for seamless class and enemy development. Used for player classes, enemies, and other entities.
+          </p>
+        </div>
+        <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-5 md:p-6">
+          <h3 className="font-bold text-sm mb-3 text-catppuccin-accent flex items-center gap-2">
+            <Zap size={16} /> Combat & AI Systems
+          </h3>
+          <p className="text-catppuccin-text-soft text-sm leading-relaxed">
+            Designed combat and gameplay systems including status effects, skills, class stats, as well as enemy AI using Dijkstra's Shortest Path Algorithm, Formational Movement and Local Avoidance.
+          </p>
+        </div>
+        <div className="bg-catppuccin-bg-soft border-2 border-catppuccin-border rounded-2xl p-5 md:p-6">
+          <h3 className="font-bold text-sm mb-3 text-catppuccin-accent flex items-center gap-2">
+            <Gamepad2 size={16} /> Roguelite Gameplay Loop
+          </h3>
+          <p className="text-catppuccin-text-soft text-sm leading-relaxed">
+            Players fight hordes of enemies zone by zone. The more a player finishes a run, the stronger they get during the next run to reach farther levels throughout the game — creating a rewarding roguelite progression loop.
+          </p>
+        </div>
+      </div>
+
+      {/* Tech Stack */}
+      <div className="mb-10">
+        <p className="text-[10px] md:text-xs text-catppuccin-text-soft uppercase tracking-widest font-bold mb-3">Tech Stack</p>
+        <div className="flex flex-wrap gap-2">
+          {['C#', 'Unity', 'URP'].map((tag, i) => (
+            <span key={tag} className={`skill-tag text-xs font-bold px-3 py-1.5 rounded-full border ${i % 2 === 0 ? 'text-catppuccin-accent border-catppuccin-accent bg-catppuccin-accent/10' : 'text-catppuccin-accent-soft border-catppuccin-accent-soft bg-catppuccin-accent-soft/10'}`}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Links */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <a 
+          href="https://github.com/clorece/Until-Journey-s-End" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="bg-catppuccin-bg border-2 border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm"
+        >
+          <Github size={18} /> View on GitHub
+        </a>
+        <Link to="/" className="border border-catppuccin-border hover:bg-catppuccin-bg-soft px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all text-sm text-catppuccin-text-soft">
+          &larr; Back to Projects
+        </Link>
+      </div>
+    </motion.div>
+  </div>
 )
 
 // --- Langy Web App ---
@@ -385,7 +693,7 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
               <div className="space-y-2">
                 <div className="w-8 h-8 bg-catppuccin-accent/10 rounded-lg flex items-center justify-center text-catppuccin-accent mb-3 border border-catppuccin-accent/20 font-bold">1</div>
                 <h5 className="font-bold text-sm">Pick a Language</h5>
-                <p className="text-xs text-catppuccin-text-soft leading-relaxed">Choose from 20 top-studied languages and select your difficulty.</p>
+                <p className="text-xs text-catppuccin-text-soft leading-relaxed">Choose from 21 top-studied languages and select your difficulty.</p>
               </div>
               <div className="space-y-2">
                 <div className="w-8 h-8 bg-catppuccin-accent-soft/10 rounded-lg flex items-center justify-center text-catppuccin-accent-soft mb-3 border border-catppuccin-accent-soft/20 font-bold">2</div>
@@ -634,10 +942,21 @@ const LangyPage = ({ isGlass }: { isGlass: boolean }) => {
 const Footer = ({ isGlass }: { isGlass: boolean }) => {
   return (
     <footer id="global-footer" className={`relative z-50 mt-auto py-8 px-6 border-t-2 border-catppuccin-border ${isGlass ? 'bg-catppuccin-bg/95 backdrop-blur-2xl' : 'bg-catppuccin-bg'} transition-all`}>
-      <div className="max-w-6xl mx-auto flex justify-center">
+      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-[10px] text-catppuccin-text-soft font-bold tracking-[0.2em] uppercase">
-          © {new Date().getFullYear()} Clorece Portfolio
+          © {new Date().getFullYear()} Clarence Grimaldo
         </p>
+        <div className="flex items-center gap-4">
+          <a href="https://github.com/clorece" target="_blank" rel="noopener noreferrer" className="text-catppuccin-text-soft hover:text-catppuccin-accent transition-colors" title="GitHub">
+            <Github size={16} />
+          </a>
+          <a href="https://www.linkedin.com/in/clarence-grimaldo" target="_blank" rel="noopener noreferrer" className="text-catppuccin-text-soft hover:text-catppuccin-accent transition-colors" title="LinkedIn">
+            <Linkedin size={16} />
+          </a>
+          <a href="mailto:clarencegrimaldo@gmail.com" className="text-catppuccin-text-soft hover:text-catppuccin-accent transition-colors" title="Email">
+            <Mail size={16} />
+          </a>
+        </div>
       </div>
     </footer>
   );
@@ -680,8 +999,10 @@ function App() {
             toggleGlass={() => setIsGlass(!isGlass)} 
           />
           <Routes>
-            <Route path="/" element={<><Hero isGlass={isGlass} /><Projects isGlass={isGlass} /></>} />
+            <Route path="/" element={<><Hero isGlass={isGlass} /><SkillsEducation isGlass={isGlass} /><Projects isGlass={isGlass} /></>} />
             <Route path="/langy" element={<LangyPage isGlass={isGlass} />} />
+            <Route path="/rin" element={<RinPage isGlass={isGlass} />} />
+            <Route path="/until-journeys-end" element={<UJEPage isGlass={isGlass} />} />
           </Routes>
           <Footer isGlass={isGlass} />
         </div>
