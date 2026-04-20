@@ -142,9 +142,18 @@ def refresh_leaderboard_cache(limit: int = 10, force: bool = False):
     try:
         data = get_leaderboard(limit)
         if data:
-            _leaderboard_cache = data
+            # Transform data to evaluate multipliers for the cache
+            evaluated_data = []
+            for entry in data:
+                # tuple format from get_leaderboard: 
+                # (user_id, points, multiplier, username, avatar, last_daily_date)
+                uid, pts, mult_raw, uname, avtr, l_date = entry
+                mult_eval = evaluate_multiplier(mult_raw, l_date)
+                evaluated_data.append((uid, pts, mult_eval, uname, avtr))
+            
+            _leaderboard_cache = evaluated_data
             _last_refresh_time = now
-            print(f"[CACHE] Leaderboard cache refreshed ({len(data)} users).")
+            print(f"[CACHE] Leaderboard cache refreshed ({len(data)} users with evaluated multipliers).")
     except Exception as e:
         print(f"[ERROR] Failed to refresh leaderboard cache: {e}")
 
@@ -230,13 +239,13 @@ def can_do_daily(user_id: str) -> bool:
     print(f"[DEBUG] User {user_id} can_do_daily: {res} (Last: {last_date}, Now: {now_est})")
     return res
 
-def get_leaderboard(limit: int = 10) -> List[Tuple[str, int, int, str, str]]:
+def get_leaderboard(limit: int = 10) -> List[Tuple[str, int, int, str, str, str]]:
     if not connection_pool: return []
     conn = None
     try:
         conn = connection_pool.getconn()
         with conn.cursor() as c:
-            c.execute('SELECT user_id, points, multiplier, username, avatar FROM users ORDER BY points DESC LIMIT %s', (limit,))
+            c.execute('SELECT user_id, points, multiplier, username, avatar, last_daily_date FROM users ORDER BY points DESC LIMIT %s', (limit,))
             return c.fetchall()
     finally:
         if conn: connection_pool.putconn(conn)

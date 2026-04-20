@@ -44,7 +44,7 @@ Langy currently supports **21 top-studied languages**, each with dedicated exper
 
 | Category | Languages | Expert Sources |
 | :--- | :--- | :--- |
-| **Asian** | Japanese, Chinese, Korean, Hindi, Vietnamese, Indonesian, Tagalog | Jisho, CEDICT, Free Dict, Wiki |
+| **Asian** | Japanese, Chinese, Korean, Hindi, Vietnamese, Indonesian, Filipino | Jisho, CEDICT, Free Dict, Wiki |
 | **European** | Spanish, French, German, Italian, Portuguese, Dutch, Polish, Swedish, Greek, Czech, Russian | RAE, Larousse, Wiki |
 | **Middle Eastern** | Arabic, Turkish, Hebrew | Wiki / Almaany |
 

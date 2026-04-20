@@ -100,7 +100,8 @@ async def rank_cmd(interaction: discord.Interaction):
     
     desc = ""
     for idx, entry in enumerate(leaderboard, 1):
-        user_id_str, points, streak, username, avatar = entry
+        user_id_str, points, streak_raw, username, avatar, last_date = entry
+        streak = database.evaluate_multiplier(streak_raw, last_date)
         desc += f"**{idx}.** <@{user_id_str}> - **{points} Points** (Multiplier: x{streak})\n"
         
     embed.description = desc
@@ -130,7 +131,7 @@ async def execute_challenge(interaction: discord.Interaction, language: str, wor
             active_mult = database.evaluate_multiplier(mult, last_date)
             w_pts = 15 * active_mult
             s_pts = 30 * active_mult
-            desc = f"**Current Streak Multiplier: x{active_mult}**\n\n**Word Challenge:** {w_pts} Points\n**Sentence Challenge:** {s_pts} Points\n\n*Select your difficulty using the buttons below!*"
+            desc = f"**Current Active Multiplier: x{active_mult}** (Streak: {mult})\n\n**Word Challenge:** {w_pts} Points\n**Sentence Challenge:** {s_pts} Points\n\n*Select your difficulty using the buttons below!*"
         else:
             desc = "**Word Challenge**\n**Sentence Challenge**\n\n*Select your difficulty using the buttons below!*"
             

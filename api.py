@@ -245,12 +245,16 @@ async def get_stats(user = Depends(get_current_user)):
     points, multiplier, last_daily = database.get_user(user_id)
     can_do_daily = database.can_do_daily(user_id)
     rank = database.get_user_rank(user_id)
+    
+    # Evaluate the active multiplier (prospective if daily is available)
+    active_multiplier = database.evaluate_multiplier(multiplier, last_daily)
+    
     return {
         "id": user_id,
         "username": user["username"],
         "avatar": user.get("avatar"),
         "points": points,
-        "multiplier": multiplier,
+        "multiplier": active_multiplier,
         "can_do_daily": can_do_daily,
         "rank": rank
     }

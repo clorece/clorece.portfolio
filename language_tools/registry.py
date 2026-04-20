@@ -3,21 +3,21 @@ from .base import LanguageTool
 from .japanese import JapaneseTool
 from .chinese import ChineseTool
 from .korean import KoreanTool
-from .tagalog import TagalogTool
 from .wiktionary import WiktionaryTool
 from .generic import GenericTool
+from .filipino import FilipinoTool
 
 class LanguageToolRegistry:
     """
     Registry to manage and dispatch language-specific tools.
-    Maps all 21 supported languages to expert dictionary sources.
+    Maps all 16 top-studied languages to expert dictionary sources.
     """
     
     _japanese = JapaneseTool()
     _chinese = ChineseTool()
     _korean = KoreanTool()
-    _tagalog = TagalogTool()
     _wiktionary = WiktionaryTool()
+    _filipino = FilipinoTool()
     _fallback = GenericTool()
 
     # Explicit mapping for all 16 supported languages
@@ -42,7 +42,7 @@ class LanguageToolRegistry:
         "indonesian": _wiktionary,
         "hebrew": _wiktionary,
         "czech": _wiktionary,
-        "tagalog": _tagalog
+        "filipino": _filipino
     }
 
     @classmethod

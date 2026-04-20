@@ -56,54 +56,16 @@ SUPPORTED_LANGUAGES = {
     "spanish", "french", "german", "japanese", "italian", 
     "korean", "chinese", "portuguese", "russian", "arabic", 
     "dutch", "greek", "hindi", "turkish", "vietnamese", "polish",
-    "swedish", "indonesian", "hebrew", "czech", "tagalog"
+    "swedish", "indonesian", "hebrew", "czech", "filipino"
 }
 
 def is_language_supported(lang: str) -> bool:
     return lang.lower() in SUPPORTED_LANGUAGES
 
-async def generate_example_sentence(english_word: str, language: str) -> tuple[str, str]:
-    """Generates a meaningful contextual example sentence using WordNet's curated examples.
-    WordNet synsets include hand-written example sentences that show the word 
-    in its correct semantic context, which is exactly what we need for disambiguation.
-    Returns (english_sentence, translated_sentence)."""
-    from nltk.corpus import wordnet
-    
-    english_sentence = ""
-    
-    try:
-        synsets = wordnet.synsets(english_word.replace(' ', '_'))
-        
-        if synsets:
-            # 1. Try to find a synset with a real example sentence
-            for syn in synsets:
-                examples = syn.examples()
-                if examples:
-                    # Pick the first example — these are curated and contextually rich
-                    english_sentence = examples[0]
-                    break
-            
-            # 2. Fallback: construct from definition if no examples exist
-            if not english_sentence:
-                definition = synsets[0].definition()
-                if definition:
-                    english_sentence = f"{english_word.capitalize()}: {definition}."
-        
-        if not english_sentence:
-            return "", ""
-        
-        # Translate the meaningful example to the target language
-        loop = asyncio.get_event_loop()
-        translator = GoogleTranslator(source='english', target=language.lower())
-        translated_sentence = await loop.run_in_executor(None, translator.translate, english_sentence)
-        return english_sentence, translated_sentence
-    except Exception:
-        return "", ""
-
-async def generate_challenge(language: str, word: str = None, category: str = "Word") -> tuple[str, str, str, str]:
+async def generate_challenge(language: str, word: str = None, category: str = "Word") -> tuple[str, str]:
     if not is_language_supported(language):
         langs_str = ", ".join(sorted([l.capitalize() for l in SUPPORTED_LANGUAGES]))
-        return "error", f"'{language}' is not currently available. Please choose from: {langs_str}.", "", ""
+        return "error", f"'{language}' is not currently available. Please choose from: {langs_str}."
     
     english_word = word if word else get_random_english_word(category)
     
@@ -112,132 +74,90 @@ async def generate_challenge(language: str, word: str = None, category: str = "W
         loop = asyncio.get_event_loop()
         translator = GoogleTranslator(source='english', target=language.lower())
         translated = await loop.run_in_executor(None, translator.translate, english_word)
-        
-        # Generate example sentences for Word mode to help disambiguate multiple meanings
-        # Returns both English and translated versions so the client can pick based on mode:
-        #   Standard (Native→English): show target-language sentence (doesn't reveal the English answer)
-        #   Inverse (English→Native): show English sentence (doesn't reveal the target-language answer)
-        example_sentence_en = ""
-        example_sentence_native = ""
-        if category.lower() == "word":
-            example_sentence_en, example_sentence_native = await generate_example_sentence(english_word, language)
-        
-        return english_word.lower(), translated, example_sentence_en, example_sentence_native
+        return english_word.lower(), translated
     except Exception as e:
-        return "error", str(e), "", ""
+        return "error", str(e)
 
-async def translate_text(text: str, source: str = 'auto', target: str = 'english', retries: int = 3) -> str:
-    for attempt in range(retries):
-        try:
-            loop = asyncio.get_event_loop()
-            translator = GoogleTranslator(source=source, target=target)
-            result = await loop.run_in_executor(None, translator.translate, text)
-            return result.lower()
-        except Exception:
-            if attempt < retries - 1:
-                await asyncio.sleep(0.5)
-            else:
-                return text.lower()
+async def translate_text(text: str, source: str = 'auto', target: str = 'english') -> str:
+    try:
+        loop = asyncio.get_event_loop()
+        translator = GoogleTranslator(source=source, target=target)
+        result = await loop.run_in_executor(None, translator.translate, text)
+        return result.lower()
+    except Exception:
+        return text.lower()
 
-def get_score_reason(original_eng: str, user_input: str, user_eng_guess: str, language: str, 
-                     semantic_score: float, lexical_score: float, wordnet_sim: float, 
-                     wordnet_desc: str, tool_used: str = None, dict_results: dict = None) -> str:
-    from nltk.corpus import wordnet
-    
-    original_eng = original_eng.lower()
+def get_score_reason(original: str, user_input: str, semantic_score: float, lexical_score: float, wordnet_sim: float, wordnet_desc: str, tool_used: str = None, dictionary_found: bool = False) -> str:
+    original = original.lower()
     user_input = user_input.lower()
-    user_eng_guess = user_eng_guess.lower()
     
     prefix = ""
-    if tool_used and dict_results:
+    if tool_used and dictionary_found:
         prefix = f"✅ **Verified by {tool_used}**\n"
-        
-    def get_wordnet_def(word):
-        syns = wordnet.synsets(word.replace(' ', '_'))
-        if syns:
-            return syns[0].definition().split(';')[0]
-        return None
-
-    orig_def = get_wordnet_def(original_eng)
     
-    # 1. Handle Exact/Grammar matches first
-    if original_eng == user_input or original_eng == user_eng_guess:
-        return prefix + f"Perfect! **{user_input}** is exactly what I was looking for."
-
-    if original_eng == user_eng_guess + 's' or user_eng_guess == original_eng + 's' or \
-       original_eng == user_eng_guess + 'es' or user_eng_guess == original_eng + 'es':
+    # 1. Basic Grammatical Checks (Singular/Plural)
+    if original == user_input + 's' or user_input == original + 's' or \
+       original == user_input + 'es' or user_input == original + 'es' or \
+       (original == "child" and user_input == "children") or \
+       (original == "children" and user_input == "child") or \
+       (original == "man" and user_input == "men") or \
+       (original == "men" and user_input == "man") or \
+       (original == "woman" and user_input == "women") or \
+       (original == "women" and user_input == "woman"):
         return prefix + "Correct concept! You just used a different grammatical form (singular/plural)."
 
-    # 2. Extract definitions for dynamic feedback
-    user_def = None
-    if dict_results and dict_results.get("definitions"):
-        user_def = dict_results["definitions"][0]
-    elif user_eng_guess != user_input:
-        user_def = get_wordnet_def(user_eng_guess)
-
-    # 3. Construct Dynamic Reasoning
-    is_correct = (semantic_score * 0.6 + lexical_score * 0.2 + wordnet_sim * 0.2) >= 0.70 # Simple check for internal reasoning context
+    # 2. Check for High Confidence Matches
+    if semantic_score >= 0.96 and lexical_score >= 0.90:
+        return prefix + "Spot on! Perfect semantic and near-perfect spelling match."
     
-    if semantic_score >= 0.70 or wordnet_sim >= 0.70:
-        # CORRECT / BORDERLINE PASS
-        if lexical_score >= 0.85:
-            return prefix + "Excellent! That's a very accurate translation."
-        
-        msg = f"Good job! **{user_input}** is a valid translation."
-        if user_def and user_def.lower() != original_eng.lower():
-            msg += f" It primarily means *{user_def}*, which is a great match for *{original_eng}*."
-        return prefix + msg
-    else:
-        # INCORRECT
-        msg = f"That doesn't seem right. "
-        if user_def:
-            msg += f"You typed **{user_input}**, which means *{user_def}* in this context. "
-        else:
-            msg += f"The system interpreted **{user_input}** as **{user_eng_guess}**. "
-            
-        if orig_def:
-            msg += f"However, I was looking for a word that means *{orig_def}* (**{original_eng}**)."
-        else:
-            msg += f"However, I was looking for **{original_eng}**."
-            
-        return prefix + msg
+    if wordnet_sim >= 1.0:
+        return prefix + wordnet_desc
 
-async def process_user_input_and_grade(language: str, original_english: str, user_input: str, category: str = "Word", is_inverse: bool = False) -> tuple[bool, float, str]:
+    # 3. Usage Gap Detection
+    if lexical_score >= 0.80 and semantic_score < 0.70:
+        return prefix + "You used the right words, but the overall meaning or usage as a phrase is different."
+
+    # 4. Handle Intermediate Scores
+    if wordnet_desc and wordnet_sim >= 0.60:
+        return prefix + wordnet_desc
+        
+    if lexical_score >= 0.85:
+        return prefix + f"Very close! Likely a minor typo: **'{user_input}'** vs **'{original}'**."
+        
+    if semantic_score >= 0.75:
+        if lexical_score < 0.60:
+            return prefix + "The meaning is there, but the wording is quite different from what we expected."
+        return prefix + "Close enough! The words share highly similar semantic meaning."
+
+    # 5. Dictionary Fallback
+    try:
+        from nltk.corpus import wordnet
+        orig_syn = wordnet.synsets(original)
+        user_syn = wordnet.synsets(user_input)
+        if orig_syn and user_syn:
+            orig_def = (orig_syn[0].definition()[:60] + '..') if len(orig_syn[0].definition()) > 60 else orig_syn[0].definition()
+            user_def = (user_syn[0].definition()[:60] + '..') if len(user_syn[0].definition()) > 60 else user_syn[0].definition()
+            
+            if semantic_score >= 0.45:
+                return prefix + f"Almost! But **'{user_input}'** usually refers to *'{user_def}'*, while **'{original}'** is *'{orig_def}'*."
+    except:
+        pass
+
+    if semantic_score >= 0.50:
+        return prefix + "The words are related in context, but the specific intention or phrasing is off."
+    return prefix + "The words have fundamentally different semantic meanings."
+
+async def process_user_input_and_grade(language: str, original_english: str, user_input: str, category: str = "Word") -> tuple[bool, float, str]:
     """
     Advanced Grading Logic with Language-Specific Dictionary Bias.
-    Now includes Direct Synonym Matching for Inverse Mode.
     """
-    from accuracy.utils import normalize_for_grading
-    
-    # 0. Early Exact Match — If the user typed the exact expected answer, skip the ML pipeline entirely.
-    if normalize_for_grading(user_input) == normalize_for_grading(original_english):
-        tool = lt_registry.get_tool(language)
-        dict_results = await tool.lookup_word(user_input, language=language)
-        dict_found = dict_results.get("found", False)
-        tool_name = tool.get_tool_name(language=language) if dict_found else None
-        prefix = f"✅ **Verified by {tool_name}**\n" if tool_name else ""
-        return True, 1.0, prefix + f"Perfect! **{user_input.lower()}** is exactly what I was looking for."
-
     # 1. Dictionary Verification (Expert Layer)
     tool = lt_registry.get_tool(language)
     dict_results = await tool.lookup_word(user_input, language=language)
     dict_found = dict_results.get("found", False)
     
-    # NEW: Direct Synonym Match for Inverse Mode
-    # If the user provides a word in the target language, check if the original English word is in its definitions.
-    if is_inverse and dict_found and "definitions" in dict_results:
-        definitions = [str(d).lower() for d in dict_results["definitions"]]
-        if original_english.lower() in definitions:
-            return True, 1.0, f"✅ Verified by {tool.get_tool_name(language=language)}: Excellent! That is a valid, exact translation."
-
     # 2. Translation (MT Layer)
     user_english_guess = await translate_text(user_input, source=language.lower())
-    
-    # 2b. Post-translation exact match — if Google Translate confirms the answer matches, it's 100%.
-    if normalize_for_grading(user_english_guess) == normalize_for_grading(original_english):
-        tool_name = tool.get_tool_name(language=language) if dict_found else None
-        prefix = f"✅ **Verified by {tool_name}**\n" if tool_name else ""
-        return True, 1.0, prefix + f"Perfect! **{user_input.lower()}** is exactly what I was looking for."
         
     # 3. Core Metrics
     semantic_score = accuracy.get_semantic_score(original_english, user_english_guess)
@@ -266,52 +186,16 @@ async def process_user_input_and_grade(language: str, original_english: str, use
         final_score += bias
             
     final_score = max(0.0, min(1.0, final_score))
-    is_correct = final_score >= 0.70
+    is_correct = final_score >= 0.75
     
     reason = get_score_reason(
-        original_english, user_input, user_english_guess, language,
+        original_english, user_english_guess, 
         semantic_score, lexical_score, wordnet_sim, wordnet_desc,
         tool_used=tool.get_tool_name(language=language) if dict_found else None,
-        dict_results=dict_results if dict_found else None
+        dictionary_found=dict_found
     )
     
     return is_correct, round(final_score, 3), reason
-
-def get_meaning_hint(word: str) -> str:
-    from nltk.corpus import wordnet
-    try:
-        # Fetch synsets for the word, replacing spaces with underscores for WordNet
-        syns = wordnet.synsets(word.replace(' ', '_'))
-        if not syns:
-            return ""
-            
-        # If multiple distinct meanings exist, show up to the top 3
-        meanings = []
-        seen_defs = set()
-        for s in syns:
-            # Get the core definition (before any semicolon to keep it concise)
-            core_def = s.definition().split(';')[0].strip()
-            if core_def not in seen_defs:
-                meanings.append(core_def)
-                seen_defs.add(core_def)
-            if len(meanings) >= 3:
-                break
-                
-        if len(meanings) > 1:
-            return f"Potential Contexts: {', '.join(meanings)}"
-        elif meanings:
-            return f"Context: {meanings[0]}"
-    except Exception:
-        pass
-    return ""
-
-def formatPrompt_NativeToEng(language: str, translated_word: str) -> str:
-    return f"Translate this **{language.capitalize()}** word to English: **{translated_word}**"
-
-def formatPrompt_EngToNative(language: str, english_word: str) -> str:
-    hint = get_meaning_hint(english_word)
-    meaning_hint = f"\n*{hint}*" if hint else ""
-    return f"Translate this English word to **{language.capitalize()}**: **{english_word}**{meaning_hint}"
 
 def get_model():
     return accuracy.get_model()
