@@ -62,10 +62,10 @@ SUPPORTED_LANGUAGES = {
 def is_language_supported(lang: str) -> bool:
     return lang.lower() in SUPPORTED_LANGUAGES
 
-async def generate_challenge(language: str, word: str = None, category: str = "Word") -> tuple[str, str]:
+async def generate_challenge(language: str, word: str = None, category: str = "Word") -> tuple[str, str, str, str]:
     if not is_language_supported(language):
         langs_str = ", ".join(sorted([l.capitalize() for l in SUPPORTED_LANGUAGES]))
-        return "error", f"'{language}' is not currently available. Please choose from: {langs_str}."
+        return "error", f"'{language}' is not currently available. Please choose from: {langs_str}.", "", ""
     
     english_word = word if word else get_random_english_word(category)
     
@@ -74,9 +74,26 @@ async def generate_challenge(language: str, word: str = None, category: str = "W
         loop = asyncio.get_event_loop()
         translator = GoogleTranslator(source='english', target=language.lower())
         translated = await loop.run_in_executor(None, translator.translate, english_word)
-        return english_word.lower(), translated
+        
+        example_en = f"I know the word {english_word}." if category.lower() == "word" else english_word
+        try:
+            example_native = await loop.run_in_executor(None, translator.translate, example_en)
+        except Exception:
+            example_native = ""
+            
+        return english_word.lower(), translated, example_en, example_native
     except Exception as e:
-        return "error", str(e)
+        return "error", str(e), "", ""
+
+def get_meaning_hint(word: str) -> str:
+    try:
+        from nltk.corpus import wordnet
+        syns = wordnet.synsets(word)
+        if syns:
+            return syns[0].definition()
+    except Exception:
+        pass
+    return ""
 
 async def translate_text(text: str, source: str = 'auto', target: str = 'english') -> str:
     try:
