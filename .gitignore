@@ -47,3 +47,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs/
+
+# --- Local Scratch & Verification Tools ---
+scratch/
+verify_dictionary.py
+verify_settings.py
+check_dns.py
+test_discord.py

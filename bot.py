@@ -252,20 +252,33 @@ async def start_bot():
     
     while True:
         try:
-            print(f"[BOT] Attempting to connect to Discord... (Current Backoff: {retry_delay}s)")
+            if bot.is_closed():
+                print("[BOT] Bot appears to be closed. Re-initializing internal state...")
+                # In some cases, we might need a more thorough reset here, 
+                # but let's try starting normally first.
+            
+            print(f"\n[BOT] Attempting to connect to Discord... (Current Backoff: {retry_delay}s)")
             await bot.start(token)
+            
             # If start() returns successfully, reset the delay for future reconnections
             retry_delay = 30
         except Exception as e:
-            print(f"\n[BOT CONNECTION ERROR] {e}")
+            import traceback
+            error_type = type(e).__name__
+            print(f"\n[BOT CONNECTION ERROR] {error_type}: {e}")
+            
+            # Only print traceback for unexpected errors (not rate limits or login failures)
+            if error_type not in ["LoginFailure", "RateLimited"]:
+                traceback.print_exc()
             
             # Clean up half-open sessions to prevent "Unclosed client session" warnings
             try:
-                await bot.close()
-            except:
-                pass
+                if not bot.is_closed():
+                    await bot.close()
+            except Exception as close_err:
+                print(f"[BOT CLEANUP ERROR] {close_err}")
                 
-            print(f"Server may be rate-limited or offline. Waiting {retry_delay}s before next attempt...")
+            print(f"Connection failed. Waiting {retry_delay}s before next attempt...")
             await asyncio.sleep(retry_delay)
             
             # Binary exponential backoff

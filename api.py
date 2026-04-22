@@ -32,8 +32,8 @@ app.state.limiter = limiter
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(status_code=429, content={"detail": "Too many requests. Please slow down."})
 
-# Global HTTP client with a generous timeout for cloud environments (HF/Supabase)
-httpx_client = httpx.AsyncClient(timeout=httpx.Timeout(20.0, connect=10.0))
+# Global HTTP client initialized in startup for correct event-loop binding
+httpx_client: httpx.AsyncClient = None
 
 # --- CORS ---
 # Restrict to known frontend origins. CORS_ORIGINS env var accepts comma-separated URLs.
@@ -147,12 +147,44 @@ async def background_initialization():
 
 @app.on_event("startup")
 async def startup_event():
+    global httpx_client
+    # Initialize with improved timeout and environment trust (proxies)
+    httpx_client = httpx.AsyncClient(
+        timeout=httpx.Timeout(40.0, connect=15.0),
+        trust_env=True,
+        follow_redirects=True
+    )
+    
     # Trigger all long-running tasks in the background
-    # This allows FastAPI to start listening on port 7860 immediately
     asyncio.create_task(background_initialization())
     asyncio.create_task(start_bot())
     asyncio.create_task(db_heartbeat())
     print("[API LIVE] Port opened. App is live while resources load in background.")
+
+@app.get("/api/health/discord")
+async def check_discord_health():
+    """Diagnostic endpoint to verify if the server can reach Discord."""
+    if not httpx_client:
+        return {"status": "initializing"}
+    try:
+        start_time = time.time()
+        # Testing a lightweight endpoint
+        res = await httpx_client.get("https://discord.com/api/v10/gateway", timeout=15.0)
+        return {
+            "status": "connected" if res.status_code == 200 else "degraded",
+            "http_code": res.status_code,
+            "latency_ms": int((time.time() - start_time) * 1000),
+            "server_time": res.headers.get("Date")
+        }
+    except Exception as e:
+        import traceback
+        print(f"[HEALTH CHECK FAILED] {e}")
+        return {
+            "status": "failed",
+            "error_type": type(e).__name__,
+            "error_detail": str(e),
+            "traceback": traceback.format_exc() if os.getenv("DEBUG") else None
+        }
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -216,8 +248,10 @@ async def callback(code: str):
         )
         token_data = token_res.json()
     except Exception as e:
-        print(f"[ERROR] Token exchange timeout: {e}")
-        raise HTTPException(status_code=504, detail="Connection to Discord timed out. Please try again.")
+        import traceback
+        print(f"[ERROR] Token exchange failed: {type(e).__name__}: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=504, detail=f"Connection to Discord timed out ({type(e).__name__}). Please try again.")
 
     if "access_token" not in token_data:
             print(f"Discord Token Error: {token_data}") # This will show up in Hugging Face Logs
