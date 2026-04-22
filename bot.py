@@ -4,6 +4,19 @@ from discord.ext import commands
 from discord import app_commands
 from dotenv import load_dotenv
 import asyncio
+import socket
+import aiohttp
+
+# --- IPv4 Force Patch ---
+# Hugging Face often has broken IPv6 routes which cause TLS handshakes to hang.
+# This patch forces all aiohttp connections (used by discord.py) to use IPv4.
+_old_init = aiohttp.TCPConnector.__init__
+def _new_init(self, *args, **kwargs):
+    if 'family' not in kwargs:
+        kwargs['family'] = socket.AF_INET
+    _old_init(self, *args, **kwargs)
+aiohttp.TCPConnector.__init__ = _new_init
+print("[NET] IPv4 force-patch applied to aiohttp.")
 
 import database
 import ml_assistant

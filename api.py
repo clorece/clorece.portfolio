@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
 import httpx
+import aiohttp
+import socket
 from dotenv import load_dotenv
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -32,8 +34,17 @@ app.state.limiter = limiter
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(status_code=429, content={"detail": "Too many requests. Please slow down."})
 
-# Global HTTP client initialized in startup for correct event-loop binding
+# --- IPv4 Force Patch for aiohttp ---
+_old_init = aiohttp.TCPConnector.__init__
+def _new_init(self, *args, **kwargs):
+    if 'family' not in kwargs:
+        kwargs['family'] = socket.AF_INET
+    _old_init(self, *args, **kwargs)
+aiohttp.TCPConnector.__init__ = _new_init
+
+# Global clients
 httpx_client: httpx.AsyncClient = None
+aiohttp_session: aiohttp.ClientSession = None
 
 # --- CORS ---
 # Restrict to known frontend origins. CORS_ORIGINS env var accepts comma-separated URLs.
@@ -147,12 +158,17 @@ async def background_initialization():
 
 @app.on_event("startup")
 async def startup_event():
-    global httpx_client
-    # Initialize with improved timeout and environment trust (proxies)
+    global httpx_client, aiohttp_session
+    # Initialize httpx for general tasks
     httpx_client = httpx.AsyncClient(
         timeout=httpx.Timeout(40.0, connect=15.0),
         trust_env=True,
         follow_redirects=True
+    )
+    # Initialize aiohttp for Discord-specific tasks (IPv4 forced)
+    aiohttp_session = aiohttp.ClientSession(
+        connector=aiohttp.TCPConnector(family=socket.AF_INET),
+        timeout=aiohttp.ClientTimeout(total=40)
     )
     
     # Trigger all long-running tasks in the background
@@ -161,21 +177,40 @@ async def startup_event():
     asyncio.create_task(db_heartbeat())
     print("[API LIVE] Port opened. App is live while resources load in background.")
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    # Cleanly close clients
+    if httpx_client:
+        await httpx_client.aclose()
+    if aiohttp_session:
+        await aiohttp_session.close()
+
 @app.get("/api/health/discord")
 async def check_discord_health():
     """Diagnostic endpoint to verify if the server can reach Discord."""
-    if not httpx_client:
+    if not aiohttp_session:
         return {"status": "initializing"}
     try:
+        import socket
         start_time = time.time()
-        # Testing a lightweight endpoint
-        res = await httpx_client.get("https://discord.com/api/v10/gateway", timeout=15.0)
-        return {
-            "status": "connected" if res.status_code == 200 else "degraded",
-            "http_code": res.status_code,
-            "latency_ms": int((time.time() - start_time) * 1000),
-            "server_time": res.headers.get("Date")
-        }
+        # Test connection through aiohttp (IPv4 forced)
+        async with aiohttp_session.get("https://discord.com/api/v10/gateway") as res:
+            latency = int((time.time() - start_time) * 1000)
+            # Try to get the external IP
+            try:
+                ip_res = await aiohttp_session.get("https://api.ipify.org?format=json", timeout=5)
+                ip_data = await ip_res.json()
+                ext_ip = ip_data.get("ip")
+            except:
+                ext_ip = "Unknown"
+
+            return {
+                "status": "connected" if res.status == 200 else "degraded",
+                "http_code": res.status,
+                "latency_ms": latency,
+                "external_ip": ext_ip,
+                "forced_family": "IPv4 (AF_INET)"
+            }
     except Exception as e:
         import traceback
         print(f"[HEALTH CHECK FAILED] {e}")
@@ -183,13 +218,8 @@ async def check_discord_health():
             "status": "failed",
             "error_type": type(e).__name__,
             "error_detail": str(e),
-            "traceback": traceback.format_exc() if os.getenv("DEBUG") else None
+            "traceback": traceback.format_exc()
         }
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    # Cleanly close the global HTTP client
-    await httpx_client.aclose()
 
 async def db_heartbeat():
     """Refreshes the leaderboard cache every 6 hours to provide a 'meaningful' use of the database connection (Keep-Alive)."""
@@ -233,9 +263,9 @@ async def get_discord_user(access_token: str):
 
 @app.get("/api/auth/callback")
 async def callback(code: str):
-    # Exchange code for access token using global client
+    # Exchange code for access token using aiohttp (IPv4 forced)
     try:
-        token_res = await httpx_client.post(
+        async with aiohttp_session.post(
             "https://discord.com/api/oauth2/token",
             data={
                 "client_id": DISCORD_CLIENT_ID,
@@ -244,9 +274,9 @@ async def callback(code: str):
                 "code": code,
                 "redirect_uri": DISCORD_REDIRECT_URI,
             },
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-        )
-        token_data = token_res.json()
+            headers={"Content-Type": "application/x-www-form-urlencoded"}
+        ) as token_res:
+            token_data = await token_res.json()
     except Exception as e:
         import traceback
         print(f"[ERROR] Token exchange failed: {type(e).__name__}: {e}")
