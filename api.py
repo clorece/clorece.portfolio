@@ -251,26 +251,41 @@ async def get_config():
         "clientId": DISCORD_CLIENT_ID
     }
 
+# --- Discord Domain Helper ---
+# Rotation list based on health check performance (ptb is usually fastest on HF)
+DISCORD_DOMAINS = ["discord.com", "ptb.discord.com", "discordapp.com"]
+
 async def get_discord_user(access_token: str):
-    # Fetch user data using global client
-    try:
-        res = await httpx_client.get(
-            "https://discord.com/api/users/@me",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        return res.json()
-    except Exception as e:
-        print(f"[ERROR] Discord user fetch timeout: {e}")
-        return None
+    """Fetches user data, rotating domains if one is blocked."""
+    last_err = "None"
+    for domain in DISCORD_DOMAINS:
+        try:
+            url = f"https://{domain}/api/users/@me"
+            async with aiohttp_session.get(
+                url,
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=aiohttp.ClientTimeout(total=10.0)
+            ) as res:
+                if res.status == 200:
+                    data = await res.json()
+                    print(f"[AUTH] User data fetched successfully via {domain}")
+                    return data
+                else:
+                    last_err = f"HTTP {res.status}"
+        except Exception as e:
+            last_err = str(e)
+            print(f"[AUTH ERROR] Failed to fetch user data via {domain}: {e}")
+            
+    print(f"[AUTH FATAL] Could not fetch user data from any domain. Last error: {last_err}")
+    return None
 
 @app.get("/api/auth/callback")
 async def callback(code: str):
     # Domain rotation to bypass IP-level drops at the edge
-    domains = ["discord.com", "discordapp.com", "ptb.discord.com"]
     last_error = "None"
     token_data = None
 
-    for domain in domains:
+    for domain in DISCORD_DOMAINS:
         try:
             print(f"[AUTH] Attempting token exchange via {domain}...")
             async with aiohttp_session.post(
@@ -290,7 +305,7 @@ async def callback(code: str):
                     print(f"[AUTH SUCCESS] Exchanged via {domain}")
                     break
                 else:
-                    last_error = f"HTTP {token_res.status}: {await token_res.text()}"
+                    last_error = f"HTTP {token_res.status}"
                     print(f"[AUTH FAILED] {domain} returned {last_error}")
         except Exception as e:
             last_error = f"{type(e).__name__}: {str(e)}"
@@ -308,7 +323,7 @@ async def callback(code: str):
 
     user_data = await get_discord_user(token_data["access_token"])
     if not user_data:
-        return {"error": "Failed to fetch user data from Discord"}
+        return {"error": "Failed to fetch user data from Discord after multiple retries."}
         
     # Create local JWT
     access_token = create_access_token({

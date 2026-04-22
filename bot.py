@@ -263,8 +263,8 @@ async def start_bot():
     retry_delay = 30  
     max_delay = 1800  # 30 minutes
     
-    # Domain rotation list
-    domains = ["discord.com", "discordapp.com", "ptb.discord.com"]
+    # Domain rotation list: Promoting PTB as the primary fallback since it works on HF.
+    domains = ["ptb.discord.com", "discordapp.com", "discord.com"]
     domain_idx = 0
     
     while True:
@@ -291,9 +291,13 @@ async def start_bot():
             if error_type not in ["LoginFailure", "RateLimited"]:
                 traceback.print_exc()
             
+            # Clean up half-open sessions cautiously
+            # We avoid calling await bot.close() during loop retries because it 
+            # permanently destroys the ClientSession in some discord.py versions.
             try:
-                if not bot.is_closed():
-                    await bot.close()
+                if bot.http.session and not bot.http.session.closed:
+                    await bot.http.session.close()
+                bot.http.session = None # Ensure a fresh session on next start()
             except Exception as close_err:
                 print(f"[BOT CLEANUP ERROR] {close_err}")
                 
