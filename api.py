@@ -168,7 +168,7 @@ async def startup_event():
     # Initialize aiohttp for Discord-specific tasks (IPv4 forced)
     aiohttp_session = aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(family=socket.AF_INET),
-        timeout=aiohttp.ClientTimeout(total=40)
+        timeout=aiohttp.ClientTimeout(total=45, connect=15)
     )
     
     # Trigger all long-running tasks in the background
@@ -187,39 +187,41 @@ async def shutdown_event():
 
 @app.get("/api/health/discord")
 async def check_discord_health():
-    """Diagnostic endpoint to verify if the server can reach Discord."""
+    """Diagnostic endpoint to verify multi-domain connectivity to Discord."""
     if not aiohttp_session:
         return {"status": "initializing"}
+    
+    results = {}
+    domains = ["discord.com", "discordapp.com", "ptb.discord.com", "canary.discord.com"]
+    
+    # Check External IP
+    ext_ip = "Unknown"
     try:
-        import socket
-        start_time = time.time()
-        # Test connection through aiohttp (IPv4 forced)
-        async with aiohttp_session.get("https://discord.com/api/v10/gateway") as res:
-            latency = int((time.time() - start_time) * 1000)
-            # Try to get the external IP
-            try:
-                ip_res = await aiohttp_session.get("https://api.ipify.org?format=json", timeout=5)
-                ip_data = await ip_res.json()
-                ext_ip = ip_data.get("ip")
-            except:
-                ext_ip = "Unknown"
+        async with aiohttp_session.get("https://api.ipify.org?format=json", timeout=10) as ip_res:
+            ip_data = await ip_res.json()
+            ext_ip = ip_data.get("ip")
+    except:
+        pass
 
-            return {
-                "status": "connected" if res.status == 200 else "degraded",
-                "http_code": res.status,
-                "latency_ms": latency,
-                "external_ip": ext_ip,
-                "forced_family": "IPv4 (AF_INET)"
-            }
-    except Exception as e:
-        import traceback
-        print(f"[HEALTH CHECK FAILED] {e}")
-        return {
-            "status": "failed",
-            "error_type": type(e).__name__,
-            "error_detail": str(e),
-            "traceback": traceback.format_exc()
-        }
+    for domain in domains:
+        try:
+            start_t = time.time()
+            async with aiohttp_session.get(f"https://{domain}/api/v10/gateway", timeout=12) as res:
+                results[domain] = {
+                    "ok": res.status == 200,
+                    "code": res.status,
+                    "ms": int((time.time() - start_t) * 1000)
+                }
+        except Exception as e:
+            results[domain] = {"ok": False, "error": type(e).__name__}
+
+    return {
+        "status": "ready",
+        "external_ip": ext_ip,
+        "forced_family": "IPv4 (AF_INET)",
+        "connectivity": results,
+        "all_failed": all(not r["ok"] for r in results.values())
+    }
 
 async def db_heartbeat():
     """Refreshes the leaderboard cache every 6 hours to provide a 'meaningful' use of the database connection (Keep-Alive)."""
@@ -263,25 +265,42 @@ async def get_discord_user(access_token: str):
 
 @app.get("/api/auth/callback")
 async def callback(code: str):
-    # Exchange code for access token using aiohttp (IPv4 forced)
-    try:
-        async with aiohttp_session.post(
-            "https://discord.com/api/oauth2/token",
-            data={
-                "client_id": DISCORD_CLIENT_ID,
-                "client_secret": DISCORD_CLIENT_SECRET,
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": DISCORD_REDIRECT_URI,
-            },
-            headers={"Content-Type": "application/x-www-form-urlencoded"}
-        ) as token_res:
-            token_data = await token_res.json()
-    except Exception as e:
-        import traceback
-        print(f"[ERROR] Token exchange failed: {type(e).__name__}: {e}")
-        traceback.print_exc()
-        raise HTTPException(status_code=504, detail=f"Connection to Discord timed out ({type(e).__name__}). Please try again.")
+    # Domain rotation to bypass IP-level drops at the edge
+    domains = ["discord.com", "discordapp.com", "ptb.discord.com"]
+    last_error = "None"
+    token_data = None
+
+    for domain in domains:
+        try:
+            print(f"[AUTH] Attempting token exchange via {domain}...")
+            async with aiohttp_session.post(
+                f"https://{domain}/api/oauth2/token",
+                data={
+                    "client_id": DISCORD_CLIENT_ID,
+                    "client_secret": DISCORD_CLIENT_SECRET,
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "redirect_uri": DISCORD_REDIRECT_URI,
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=aiohttp.ClientTimeout(total=15) # Shorter timeout per domain to rotate faster
+            ) as token_res:
+                if token_res.status == 200:
+                    token_data = await token_res.json()
+                    print(f"[AUTH SUCCESS] Exchanged via {domain}")
+                    break
+                else:
+                    last_error = f"HTTP {token_res.status}: {await token_res.text()}"
+                    print(f"[AUTH FAILED] {domain} returned {last_error}")
+        except Exception as e:
+            last_error = f"{type(e).__name__}: {str(e)}"
+            print(f"[AUTH ERROR] {domain} connection failed: {last_error}")
+
+    if not token_data:
+        raise HTTPException(
+            status_code=504, 
+            detail=f"Connection to Discord failed across all domains. Last error: {last_error}"
+        )
 
     if "access_token" not in token_data:
             print(f"Discord Token Error: {token_data}") # This will show up in Hugging Face Logs

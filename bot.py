@@ -263,37 +263,45 @@ async def start_bot():
     retry_delay = 30  
     max_delay = 1800  # 30 minutes
     
+    # Domain rotation list
+    domains = ["discord.com", "discordapp.com", "ptb.discord.com"]
+    domain_idx = 0
+    
     while True:
         try:
-            if bot.is_closed():
-                print("[BOT] Bot appears to be closed. Re-initializing internal state...")
-                # In some cases, we might need a more thorough reset here, 
-                # but let's try starting normally first.
+            current_domain = domains[domain_idx]
+            # Patch discord.py BASE URL to use the rotating domain
+            import discord.http
+            discord.http.Route.BASE = f"https://{current_domain}/api/v10"
             
-            print(f"\n[BOT] Attempting to connect to Discord... (Current Backoff: {retry_delay}s)")
+            if bot.is_closed():
+                print(f"[BOT] Bot appears to be closed. Re-initializing for {current_domain}...")
+            
+            print(f"\n[BOT] Attempting to connect via {current_domain}... (Backoff: {retry_delay}s)")
             await bot.start(token)
             
-            # If start() returns successfully, reset the delay for future reconnections
+            # If start() returns successfully, reset the delay and domain
             retry_delay = 30
+            domain_idx = 0
         except Exception as e:
             import traceback
             error_type = type(e).__name__
-            print(f"\n[BOT CONNECTION ERROR] {error_type}: {e}")
+            print(f"\n[BOT CONNECTION ERROR] {error_type} via {domains[domain_idx]}: {e}")
             
-            # Only print traceback for unexpected errors (not rate limits or login failures)
             if error_type not in ["LoginFailure", "RateLimited"]:
                 traceback.print_exc()
             
-            # Clean up half-open sessions to prevent "Unclosed client session" warnings
             try:
                 if not bot.is_closed():
                     await bot.close()
             except Exception as close_err:
                 print(f"[BOT CLEANUP ERROR] {close_err}")
                 
-            print(f"Connection failed. Waiting {retry_delay}s before next attempt...")
+            print(f"Connection failed via {domains[domain_idx]}. Rotating domain and waiting {retry_delay}s...")
             await asyncio.sleep(retry_delay)
             
+            # Rotate domain
+            domain_idx = (domain_idx + 1) % len(domains)
             # Binary exponential backoff
             retry_delay = min(retry_delay * 2, max_delay)
 
