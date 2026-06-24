@@ -15,7 +15,7 @@
     { src: 'uploads/pasted-1782196174950-0.png', title: 'Integrated PBR', desc: 'Hardcoded rough and smooth reflections with integrated normals for reflection details and varying roughness per texel.' },
     { src: 'https://github.com/user-attachments/assets/11e3fe64-94a2-4df5-ab9c-6779996f429b', title: 'Urban Rooftop', desc: '' },
     { src: 'https://github.com/user-attachments/assets/33f6534d-ae84-47de-8b7c-375bc73fbac8', title: 'Path Traced Global Illumination II', desc: '' },
-    { src: 'https://github.com/user-attachments/assets/d4547eca-447c-4d3a-8f26-a443ae8ce56d', title: 'Keep', desc: '' },
+    { src: 'https://github.com/user-attachments/assets/d4547eca-447c-4d3a-8f26-a443ae8ce56d', title: 'Soft Shadows', desc: '' },
     { src: 'https://github.com/user-attachments/assets/0f248606-44e1-4a70-937e-2e266029b5c7', title: 'Integrated PBR II', desc: '' },
     { src: 'https://github.com/user-attachments/assets/f1fcd585-3402-4b2a-b2bb-2dfe5a52cadb', title: 'Path Traced Global Illumination III', desc: '' },
     { src: 'https://github.com/user-attachments/assets/0a594301-648f-49ef-ab48-20a544b7c61e', title: 'Water Rendering', desc: 'Reflections, caustics, refraction, parallax waves, and wave displacement.' },
@@ -59,6 +59,7 @@
 
   let ytPlayer = null, ytReady = false, timeInterval = null, lastSong = -1, seekActive = false;
   let revObserver = null, vidObserver = null;
+  let userGestured = false; // browsers block audible autoplay until the first interaction
 
   /* ── Tiny DOM helpers ───────────────────────────────────── */
   const $ = (id) => document.getElementById(id);
@@ -181,6 +182,12 @@
   }
 
   /* ── Audio player (YouTube IFrame API) ──────────────────── */
+  // Unmute once the visitor has interacted (respecting a manual mute).
+  function tryUnmute() {
+    if (!ytReady || !ytPlayer || !userGestured || state.muted) return;
+    try { ytPlayer.unMute(); ytPlayer.setVolume(Math.round(state.volume * 100)); } catch (e) {}
+  }
+
   function apPlay() { if (ytReady && ytPlayer) { try { ytPlayer.playVideo(); } catch (e) {} } state.playing = true; renderAudio(); }
   function apPause() { if (ytReady && ytPlayer) { try { ytPlayer.pauseVideo(); } catch (e) {} } state.playing = false; renderAudio(); }
   function togglePlay() { state.playing ? apPause() : apPlay(); }
@@ -288,8 +295,11 @@
           onReady: (e) => {
             ytReady = true;
             e.target.setVolume(Math.round(state.volume * 100));
-            if (state.muted) e.target.mute(); else e.target.unMute();
+            // Start muted so the browser permits autoplay, then begin playback.
+            e.target.mute();
+            e.target.playVideo();
             state.playing = true; renderAudio();
+            tryUnmute(); // unmute immediately if the visitor already interacted
           },
           onStateChange: (e) => {
             if (e.data === 1) { state.playing = true; renderAudio(); }
@@ -351,6 +361,15 @@
       el.addEventListener('pointerup', () => { seekActive = false; });
       el.addEventListener('change', () => { seekActive = false; });
     });
+
+    // first interaction → make the autoplaying (muted) track audible
+    const gestureEvents = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'];
+    const onFirstGesture = () => {
+      userGestured = true;
+      tryUnmute();
+      gestureEvents.forEach((ev) => window.removeEventListener(ev, onFirstGesture, true));
+    };
+    gestureEvents.forEach((ev) => window.addEventListener(ev, onFirstGesture, { capture: true, passive: true }));
 
     // gallery keyboard nav
     document.addEventListener('keydown', (e) => {
