@@ -59,6 +59,7 @@
 
   let ytPlayer = null, ytReady = false, timeInterval = null, lastSong = -1, seekActive = false;
   let revObserver = null, vidObserver = null;
+  let started = false; // true once the visitor has pressed play at least once
 
   /* ── Tiny DOM helpers ───────────────────────────────────── */
   const $ = (id) => document.getElementById(id);
@@ -183,7 +184,7 @@
   /* ── Audio player (YouTube IFrame API) ──────────────────── */
   // Starts paused; the visitor presses play. Playing a video is a real user
   // gesture, so the browser allows audible playback with no autoplay tricks.
-  function apPlay() { if (ytReady && ytPlayer) { try { ytPlayer.playVideo(); } catch (e) {} } state.playing = true; renderAudio(); }
+  function apPlay() { started = true; if (ytReady && ytPlayer) { try { ytPlayer.playVideo(); } catch (e) {} } state.playing = true; renderAudio(); }
   function apPause() { if (ytReady && ytPlayer) { try { ytPlayer.pauseVideo(); } catch (e) {} } state.playing = false; renderAudio(); }
   function togglePlay() { state.playing ? apPause() : apPlay(); }
   // Load (autoplay) while playing, otherwise cue so paused stays paused.
@@ -299,9 +300,11 @@
             renderAudio(); // stays paused until the play button is pressed
           },
           onStateChange: (e) => {
-            if (e.data === 1) { state.playing = true; renderAudio(); }       // playing
-            else if (e.data === 2) { state.playing = false; renderAudio(); }  // paused
-            else if (e.data === 0) skipNext();                               // ended
+            if (e.data === 1) { // playing
+              if (!started) { try { e.target.pauseVideo(); } catch (er) {} return; } // block unsolicited autoplay
+              state.playing = true; renderAudio();
+            } else if (e.data === 2) { state.playing = false; renderAudio(); } // paused
+            else if (e.data === 0) skipNext();                                // ended
           },
         },
       });
