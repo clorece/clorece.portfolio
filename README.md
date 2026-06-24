@@ -1,77 +1,37 @@
----
-title: Langy Portfolio Backend
-colorFrom: blue
-colorTo: green
-sdk: docker
-pinned: false
----
+# Clarence Grimaldo — Portfolio
 
-# Developer Portfolio | Clorece
+Personal portfolio for **clorece** (Clarence Grimaldo) — graphics, game development & 3D modelling.
 
-Welcome to my professional portfolio. I am a developer passionate about building interactive, AI-driven experiences that bridge the gap between complex technology and intuitive user interfaces.
+Live site: deployed to GitHub Pages from `main`.
 
-## About Me
+## Stack
 
-I focus on developing applications that solve real-world problems through a combination of engineering and artificial intelligence. My work ranges from full-stack web platforms to intelligent automation tools.
+Plain static site — no build step, no framework.
 
-- **Currently:** Building AI-driven educational tools and modern web experiences.
-- **Interests:** Natural Language Processing (NLP), Semantic Search, and Interactive Game Design.
-- **Philosophy:** Technology should be transparent, secure, and user-centric.
+- `index.html` — markup for every view (home, Serie, Allium, Until Journey's End, 3D & Design, Legacy) plus the gallery lightbox
+- `styles.css` — all styling (ported 1:1 from the Claude Design source)
+- `app.js` — SPA routing, the YouTube-backed audio player + mini player, gallery lightbox, scroll-reveal, in-view video autoplay, and hover states
+- `uploads/` — local media (Until Journey's End screenshots & gameplay clips, profile art)
+- `favicon.svg`
 
-## Skills & Interests
+External runtime dependencies (CDN): Google Fonts (Space Grotesk, DM Mono), Phosphor Icons, and the YouTube IFrame API for the audio player. Shader screenshots for Serie/Allium are served from GitHub's `user-attachments` CDN.
 
-- **Languages:** Python, TypeScript, JavaScript, SQL
-- **AI/ML:** Sentence Transformers, NLP, Semantic Analysis, WordNet
-- **Frontend:** React, Framer Motion, Tailwind CSS
-- **Backend:** FastAPI, Discord.py, Node.js
-- **Cloud/DevOps:** Supabase (PostgreSQL), Docker, GitHub Actions, Hugging Face
+## Develop locally
 
----
+It's a static site — open `index.html`, or serve the folder:
 
-## Featured Project: Langy
+```bash
+python3 -m http.server 8000
+# then visit http://localhost:8000
+```
 
-**Langy** is a sophisticated language learning bot designed to make translation practice more intuitive and rewarding. It goes beyond simple string matching by understanding the *meaning* behind your answers.
+## Deploy
 
-### The Hybrid Accuracy Engine
-Most language bots fail if you have a single typo or use a synonym. Langy solves this with a modular, 3-tier scoring system:
+Pushing to `main` triggers `.github/workflows/deploy.yml`, which uploads the
+repository root and publishes it to GitHub Pages. `.nojekyll` is present so
+Pages serves files as-is (no Jekyll processing).
 
-1.  **Expert Dictionary Layer (NEW):** Before scoring, Langy consults authoritative dictionaries (Jisho, CEDICT, Wiktionary) to verify word existence and award "Confidence Bonuses."
-2.  **Semantic Analysis (60%):** Uses vector embeddings (`all-MiniLM-L6-v2`) to compare the "intent" of your translation.
-3.  **Linguistic Hierarchy (40%):** Leverages **WordNet** and specialized language tools to identify synonyms and categorical relationships.
+## Design source
 
-### Expert Language Support
-Langy currently supports **21 top-studied languages**, each with dedicated expert tool verification:
-
-| Category | Languages | Expert Sources |
-| :--- | :--- | :--- |
-| **Asian** | Japanese, Chinese, Korean, Hindi, Vietnamese, Indonesian, Filipino | Jisho, CEDICT, Free Dict, Wiki |
-| **European** | Spanish, French, German, Italian, Portuguese, Dutch, Polish, Swedish, Greek, Czech, Russian | RAE, Larousse, Wiki |
-| **Middle Eastern** | Arabic, Turkish, Hebrew | Wiki / Almaany |
-
-### Dual-Platform Synergy
-- **Discord Bot:** Learn where you hang out. Get daily challenges, track streaks, and compete on a global leaderboard directly in Discord.
-- **Web Interface:** A modern app that syncs with Discord for a seamless learning experience across devices.
-
----
-
-## Getting Started
-
-### Local Setup (Backend)
-1.  **Environment:** Copy `.env.example` to `.env` and fill in your Discord credentials and Supabase URL.
-2.  **Install:** `pip install -r requirements.txt`
-3.  **Run:** `python api.py` (Starts both the FastAPI server and the Discord Bot).
-
-### Local Setup (Frontend)
-1.  **Navigate:** `cd portfolio-web`
-2.  **Install:** `npm install`
-3.  **Run:** `npm run dev`
-
----
-
-## Contact
-
-Feel free to reach out for collaborations or to check out more of my work!
-
-- **GitHub:** [your-github-profile]
-- **Discord:** [your-discord-handle]
-- **Portfolio:** [your-deployed-url]
+This site is a faithful implementation of the Claude Design project
+"Game development portfolio redesign" (`Portfolio.dc.html`).

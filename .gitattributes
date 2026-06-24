@@ -1,2 +1,14 @@
-# Auto detect text files and perform LF normalization
+# Normalize line endings for text files
 * text=auto
+
+# Treat media as binary (no EOL conversion, no diff) — keeps videos/images intact
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.svg text
+*.mp4 binary
+*.webm binary
+*.mov binary
+*.ico binary

@@ -1,0 +1,51 @@
+/* ── Clarence Grimaldo — Portfolio ──
+   Faithful port of the Claude Design "Portfolio.dc.html".
+   Core tokens: bg #0e0b0d · text #f5ede8 · accent #d4826e · cool #9ab8bb · amber #e8a85a */
+
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:#0e0b0d;overflow-x:hidden;font-family:'Space Grotesk',sans-serif;color:#f5ede8}
+::-webkit-scrollbar{width:5px;background:#1a1015}
+::-webkit-scrollbar-thumb{background:rgba(212,130,110,.25);border-radius:2px}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes bounce{0%,100%{opacity:.5;transform:translateY(0)}50%{opacity:1;transform:translateY(10px)}}
+@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.wf-bg{background-color:#0e0b0d;background-image:linear-gradient(rgba(212,130,110,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(212,130,110,.055) 1px,transparent 1px),radial-gradient(circle,rgba(212,130,110,.12) 1px,transparent 1px);background-size:64px 64px,64px 64px,64px 64px;background-position:0 0,0 0,32px 32px}
+.wf-card{position:relative}
+.wf-card::before,.wf-card::after{content:'';position:absolute;width:20px;height:20px;border-color:rgba(212,130,110,.45);border-style:solid;pointer-events:none;z-index:2;transition:border-color .25s}
+.wf-card::before{top:-1px;left:-1px;border-width:1.5px 0 0 1.5px}
+.wf-card::after{bottom:-1px;right:-1px;border-width:0 1.5px 1.5px 0}
+.wf-card:hover::before,.wf-card:hover::after{border-color:rgba(212,130,110,.9)}
+.wf-profile{position:relative;display:inline-block}
+.wf-profile::before,.wf-profile::after{content:'';position:absolute;width:28px;height:28px;border-color:rgba(212,130,110,.5);border-style:solid;pointer-events:none;z-index:2}
+.wf-profile::before{top:-2px;left:-2px;border-width:2px 0 0 2px}
+.wf-profile::after{bottom:-2px;right:-2px;border-width:0 2px 2px 0}
+.wf-divider{border:none;border-top:1px dashed rgba(212,130,110,.18);margin:0}
+.wf-scan::after{content:'';position:absolute;left:0;right:0;height:2px;background:linear-gradient(to bottom,transparent,rgba(212,130,110,.04),transparent);animation:scanline 8s linear infinite;pointer-events:none;z-index:0}
+
+.ap-range{-webkit-appearance:none;appearance:none;height:2px;border-radius:1px;background:rgba(212,130,110,.18);outline:none;cursor:pointer}
+.ap-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:10px;height:10px;border-radius:50%;background:#d4826e;cursor:pointer}
+.ap-range::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#d4826e;border:none;cursor:pointer}
+.ap-range-v{background:rgba(154,184,187,.2)}
+.ap-range-v::-webkit-slider-thumb{background:#9ab8bb}
+.ap-range-v::-moz-range-thumb{background:#9ab8bb;border:none}
+
+/* SPA views: only the active one is shown */
+[data-view]{display:none}
+[data-view].active{display:block}
+
+/* Nav items */
+.nav-item{font-family:'Space Grotesk',sans-serif;font-size:13px;color:#f5ede8;border:none;background:none;cursor:pointer;padding:0;font-weight:400}
+.nav-item.active{color:#d4826e;font-weight:600}
+
+/* Mini player in nav (visible only off the home page) */
+#mini-player{display:none}
+#mini-player.show{display:flex}
+
+@media(max-width:768px){.proj-pad{padding:0 20px !important}.hero-pad{padding:48px 20px !important}.leg-pad{padding:40px 20px !important}.about-grid{grid-template-columns:1fr !important}.home-hero{flex-direction:column !important;padding:60px 24px 48px !important}.home-pfp{width:260px !important;height:260px !important}.home-cards{grid-template-columns:1fr !important}}
