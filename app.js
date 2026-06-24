@@ -60,6 +60,8 @@
   let ytPlayer = null, ytReady = false, timeInterval = null, lastSong = -1, seekActive = false;
   let revObserver = null, vidObserver = null;
   let userGestured = false; // browsers block audible autoplay until the first interaction
+  let intendPlaying = true; // whether playback is *meant* to be running (autoplay by default)
+  let resumeNudges = 0;     // limit auto-resume attempts on browser-forced pauses
 
   /* ── Tiny DOM helpers ───────────────────────────────────── */
   const $ = (id) => document.getElementById(id);
@@ -182,22 +184,29 @@
   }
 
   /* ── Audio player (YouTube IFrame API) ──────────────────── */
-  // Unmute once the visitor has interacted (respecting a manual mute).
+  // Unmute once the visitor has performed a genuine activation gesture
+  // (respecting a manual mute). Also re-issues play in case the browser
+  // had paused the muted autoplay.
   function tryUnmute() {
     if (!ytReady || !ytPlayer || !userGestured || state.muted) return;
-    try { ytPlayer.unMute(); ytPlayer.setVolume(Math.round(state.volume * 100)); } catch (e) {}
+    try {
+      ytPlayer.unMute();
+      ytPlayer.setVolume(Math.round(state.volume * 100));
+      if (intendPlaying) ytPlayer.playVideo();
+    } catch (e) {}
   }
 
-  function apPlay() { if (ytReady && ytPlayer) { try { ytPlayer.playVideo(); } catch (e) {} } state.playing = true; renderAudio(); }
-  function apPause() { if (ytReady && ytPlayer) { try { ytPlayer.pauseVideo(); } catch (e) {} } state.playing = false; renderAudio(); }
+  function apPlay() { intendPlaying = true; if (ytReady && ytPlayer) { try { ytPlayer.playVideo(); } catch (e) {} } state.playing = true; renderAudio(); }
+  function apPause() { intendPlaying = false; if (ytReady && ytPlayer) { try { ytPlayer.pauseVideo(); } catch (e) {} } state.playing = false; renderAudio(); }
   function togglePlay() { state.playing ? apPause() : apPlay(); }
   function loadSong(i) { if (ytReady && ytPlayer) { try { ytPlayer.loadVideoById(SONGS[i].videoId); } catch (e) {} } }
-  function skipNext() { state.songIdx = (state.songIdx + 1) % SONGS.length; state.currentTime = 0; loadSong(state.songIdx); renderAudio(); }
+  function skipNext() { intendPlaying = true; state.songIdx = (state.songIdx + 1) % SONGS.length; state.currentTime = 0; loadSong(state.songIdx); renderAudio(); }
   function skipPrev() {
+    intendPlaying = true;
     state.songIdx = state.currentTime > 3 ? state.songIdx : (state.songIdx - 1 + SONGS.length) % SONGS.length;
     state.currentTime = 0; loadSong(state.songIdx); renderAudio();
   }
-  function selectSong(i) { state.songIdx = i; state.currentTime = 0; loadSong(i); renderAudio(); }
+  function selectSong(i) { intendPlaying = true; state.songIdx = i; state.currentTime = 0; loadSong(i); renderAudio(); }
   function seekTo(e) {
     const t = Number(e.target.value);
     state.currentTime = t;
@@ -302,9 +311,18 @@
             tryUnmute(); // unmute immediately if the visitor already interacted
           },
           onStateChange: (e) => {
-            if (e.data === 1) { state.playing = true; renderAudio(); }
-            if (e.data === 2) { state.playing = false; renderAudio(); }
-            if (e.data === 0) skipNext();
+            if (e.data === 1) { state.playing = true; resumeNudges = 0; renderAudio(); } // playing
+            else if (e.data === 2) { // paused
+              // If we still intend to play and it's the muted pre-interaction
+              // autoplay, the browser likely throttled it — nudge it back.
+              let muted = true; try { muted = e.target.isMuted(); } catch (er) {}
+              if (intendPlaying && muted && resumeNudges < 3) {
+                resumeNudges++;
+                try { e.target.playVideo(); } catch (er) {}
+              } else {
+                state.playing = false; renderAudio();
+              }
+            } else if (e.data === 0) skipNext(); // ended
           },
         },
       });
@@ -362,14 +380,16 @@
       el.addEventListener('change', () => { seekActive = false; });
     });
 
-    // first interaction → make the autoplaying (muted) track audible
-    const gestureEvents = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'];
+    // first genuine activation gesture → make the autoplaying (muted) track
+    // audible. Only discrete-input events count as "user activation" for
+    // media; scroll/wheel/mousemove do NOT and would get playback paused.
+    const gestureEvents = ['pointerdown', 'mousedown', 'touchstart', 'keydown', 'click'];
     const onFirstGesture = () => {
       userGestured = true;
       tryUnmute();
       gestureEvents.forEach((ev) => window.removeEventListener(ev, onFirstGesture, true));
     };
-    gestureEvents.forEach((ev) => window.addEventListener(ev, onFirstGesture, { capture: true, passive: true }));
+    gestureEvents.forEach((ev) => window.addEventListener(ev, onFirstGesture, { capture: true }));
 
     // gallery keyboard nav
     document.addEventListener('keydown', (e) => {
